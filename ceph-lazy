@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Specify exta option for ceph like the username/keyring/etc. Can also be done with CEPH_ARGS global variable
+#CEPH_ARG="-n client.username"
+CEPH_BIN=$(which ceph 2> /dev/null)
+JQ_BIN=$(which jq 2> /dev/null)
+
+function check_requirements()
+{
+  if $CEPH_BIN -v &> /dev/null; then
+    CEPH="$CEPH_BIN $CEPH_ARG"
+  else
+    echo "ERROR: Ceph binary not found, please check you have ceph client installed and avaiable in your path"
+    return 1
+  fi
+
+   if ! $CEPH -s &> /dev/null; then
+    echo "ERROR: Cannot connect to cluster, please check your username permissions"
+    echo "ERROT: Command $CEPH -s failed"
+    return 1
+  fi
+ 
+ if $JQ_BIN --version &> /dev/null; then
+    JQ="$JQ_BIN -M"
+  else
+    echo "ERROR: JQ binary not found, please check you have jq installed and avaiable in your path"
+    return 1
+  fi
+}
+
+
+function find_pg() {
+
+local PGID=$1
+echo "PG $PGID has been found at : "
+
+for osd in $(ceph pg $PGID  query | $JQ -cr .up[]); do
+	echo -n "OSD:osd.$osd | Host : "
+	$CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host
+done
+}
+
+function find_object() {
+  local OBJID=$1
+  local PGID=$($CEPH osd map rbd $OBJID --format json 2> /dev/null | $JQ -cr .pgid)
+  echo $OBJID found into PG $PGID 
+  find_pg $PGID
+}
+
+function find_prim_pg_from_osd() {
+  local POSD=$1
+  echo Looking for primary PGs beloging to OSD $POSD
+  $CEPH pg dump --format json 2>/dev/null | $JQ --argjson posd $POSD '.pg_stats[] | select(.acting_primary==$posd).pgid'
+}
+
+function find_all_pg_from_osd() {
+  local OSD=$1
+  echo Looking for all PGs mapped to OSD $OSD
+  ceph pg dump --forma json | jq -M --argjson osd $OSD '.pg_stats[] | select(.up[]==$osd).pgid'
+}
+
+
+# Check if all requirements are met
+check_requirements || exit 1
+
+#find_pg 0.1c
+
+#find_object rb.0.376d.2ae8944a.000000000016
+
+#find_pg $(ceph osd map rbd rb.0.376d.2ae8944a.000000000016 --format json | jq -cr .pgid)
+
+
+#find_prim_pg_from_osd 1
+
+find_all_pg_from_osd 1
