@@ -56,7 +56,17 @@ function find_prim_pg_from_osd() {
 function find_all_pg_from_osd() {
   local OSD=$1
   echo Looking for all PGs mapped to OSD $OSD
-  ceph pg dump --forma json | $JQ -M --argjson osd $OSD '.pg_stats[] | select(.up[]==$osd).pgid'
+  ceph pg dump --forma json &> /dev/null | $JQ -M --argjson osd $OSD '.pg_stats[] | select(.up[]==$osd).pgid'
+}
+
+function get_rbd_prefix() {
+
+  local POOL=$1
+  local RBD=$2
+  
+  local PREFIX=$(rbd --image $2 -p $POOL info --format json &> /dev/null | jq --raw-output .block_name_prefix)
+
+  echo $PREFIX
 }
 
 function count_rbd_object() {
@@ -80,4 +90,6 @@ check_requirements || exit 1
 
 #find_prim_pg_from_osd 1
 
-find_all_pg_from_osd 1
+#find_all_pg_from_osd 1
+
+get_rbd_prefix rbd myrbd
