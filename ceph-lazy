@@ -21,7 +21,7 @@ function check_requirements()
   fi
  
  if $JQ_BIN --version &> /dev/null; then
-    JQ="$JQ_BIN -M"
+    JQ="$JQ_BIN -M --raw-output"
   else
     echo "ERROR: JQ binary not found, please check you have jq installed and avaiable in your path"
     return 1
@@ -57,6 +57,14 @@ function find_all_pg_from_osd() {
   local OSD=$1
   echo Looking for all PGs mapped to OSD $OSD
   ceph pg dump --forma json | jq -M --argjson osd $OSD '.pg_stats[] | select(.up[]==$osd).pgid'
+}
+
+function count_rbd_object() {
+
+  local POOL=$1
+  local RBD=$2
+
+
 }
 
 
