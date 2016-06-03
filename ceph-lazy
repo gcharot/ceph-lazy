@@ -29,10 +29,10 @@ function check_requirements()
 }
 
 
-function find_pg() {
+function find_host_from_pg() {
 
 local PGID=$1
-echo "PG $PGID has been found at : "
+echo "PG $PGID has been found at (first is primary) : "
 
 for osd in $(ceph pg $PGID  query | $JQ -cr .up[]); do
 	echo -n "OSD:osd.$osd | Host : "
@@ -40,11 +40,11 @@ for osd in $(ceph pg $PGID  query | $JQ -cr .up[]); do
 done
 }
 
-function find_object() {
+function find_host_from_object() {
   local OBJID=$1
   local PGID=$($CEPH osd map rbd $OBJID --format json 2> /dev/null | $JQ -cr .pgid)
   echo $OBJID found into PG $PGID 
-  find_pg $PGID
+  find_host_from_pg $PGID
 }
 
 function find_prim_pg_from_osd() {
@@ -74,7 +74,6 @@ function count_rbd_object() {
 
   local POOL=$1
   local RBD=$2
-
   local RBD_PREFIX=$(get_rbd_prefix $POOL $RBD)
 
   echo "INFO: RBD image $POOL/RBD has prefix $PREFIX; now couning objects..."
@@ -103,9 +102,9 @@ function find_prim_host_from_rbd() {
 # Check if all requirements are met
 check_requirements || exit 1
 
-#find_pg 0.1c
+#find_host_from_pg 0.1c
 
-#find_object rb.0.376d.2ae8944a.000000000016
+#find_host_from_object rb.0.376d.2ae8944a.000000000016
 
 #find_pg $(ceph osd map rbd rb.0.376d.2ae8944a.000000000016 --format json | jq -cr .pgid)
 
