@@ -55,7 +55,7 @@ function find_prim_pg_from_osd() {
 
 function find_all_pg_from_osd() {
   local OSD=$1
-  echo Looking for all PGs mapped to OSD $OSD
+  echo "INFO: Looking for all PGs mapped to OSD $OSD"
   ceph pg dump --forma json &> /dev/null | $JQ -M --argjson osd $OSD '.pg_stats[] | select(.up[]==$osd).pgid'
 }
 
