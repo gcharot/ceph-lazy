@@ -75,7 +75,7 @@ function count_rbd_object() {
   local POOL=$1
   local RBD=$2
 
-  local RBD_PREFIX=$(get_rbd_prefix)
+  local RBD_PREFIX=$(get_rbd_prefix $POOL $RBD)
 
   echo "INFO: RBD image $POOL/RBD has prefix $PREFIX; now couning objects..."
 
