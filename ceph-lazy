@@ -49,7 +49,7 @@ function find_object() {
 
 function find_prim_pg_from_osd() {
   local POSD=$1
-  echo Looking for primary PGs beloging to OSD $POSD
+  echo "INFO: Looking for primary PGs beloging to OSD $POSD"
   $CEPH pg dump --format json 2>/dev/null | $JQ --argjson posd $POSD '.pg_stats[] | select(.acting_primary==$posd).pgid'
 }
 
@@ -85,6 +85,21 @@ function count_rbd_object() {
 }
 
 
+function find_prim_host_from_rbd() {
+
+  local pool=$1
+  local rbd=$2
+  local rbd_prefix=$(get_rbd_prefix $pool $rbd)
+
+  echo "INFO: RBD image $POOL/RBD has prefix $rbd_prefix; now finding primary host..."
+
+  for obj in $(rados -p $pool ls | grep $rbd_prefix);
+    do
+    echo $(ceph osd find $(ceph osd map $pool $obj --format json | jq --raw-output .acting_primary) | jq .crush_location.host);
+  done | sort -u
+
+}
+
 # Check if all requirements are met
 check_requirements || exit 1
 
@@ -99,6 +114,8 @@ check_requirements || exit 1
 
 #find_all_pg_from_osd 1
 
-get_rbd_prefix rbd myrbd
+#get_rbd_prefix rbd myrbd
 
-count_rbd_object rbd myrbd
+#count_rbd_object rbd myrbd
+
+find_prim_host_from_rbd rbd myrbd
