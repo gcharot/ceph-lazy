@@ -95,7 +95,7 @@ function find_prim_host_from_rbd() {
 
   for obj in $(rados -p $pool ls | grep $rbd_prefix);
     do
-    echo $(ceph osd find $(ceph osd map $pool $obj --format json | jq --raw-output .acting_primary) | jq .crush_location.host);
+      ceph osd find $(ceph osd map $pool $obj --format json | jq --raw-output .acting_primary) | jq .crush_location.host;
   done | sort -u
 
 }
