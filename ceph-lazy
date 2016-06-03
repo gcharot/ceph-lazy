@@ -64,17 +64,24 @@ function get_rbd_prefix() {
   local POOL=$1
   local RBD=$2
   
-  local PREFIX=$(rbd --image $2 -p $POOL info --format json &> /dev/null | jq --raw-output .block_name_prefix)
+  local PREFIX=$(rbd --image $2 -p $POOL info --format json 2> /dev/null | jq --raw-output .block_name_prefix)
 
   echo $PREFIX
 }
+
 
 function count_rbd_object() {
 
   local POOL=$1
   local RBD=$2
 
+  local RBD_PREFIX=$(get_rbd_prefix)
 
+  echo "INFO: RBD image $POOL/RBD has prefix $PREFIX; now couning objects..."
+
+  local RBD_OBJ=$(rados -p $POOL ls | grep $RBD_PREFIX | wc -l)
+
+  echo "INFO: RBD image $POOL/RBD has $RBD_OBJ objects"
 }
 
 
@@ -93,3 +100,5 @@ check_requirements || exit 1
 #find_all_pg_from_osd 1
 
 get_rbd_prefix rbd myrbd
+
+count_rbd_object rbd myrbd
