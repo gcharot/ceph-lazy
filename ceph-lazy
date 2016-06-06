@@ -90,7 +90,7 @@ function find_prim_host_from_rbd() {
   local rbd=$2
   local rbd_prefix=$(get_rbd_prefix $pool $rbd)
 
-  echo "INFO: RBD image $POOL/RBD has prefix $rbd_prefix; now finding primary host..."
+  echo "INFO: RBD image $pool/rbd_prefix has prefix $rbd_prefix; now finding primary hosts, please wait..."
 
   for obj in $(rados -p $pool ls | grep $rbd_prefix);
     do
