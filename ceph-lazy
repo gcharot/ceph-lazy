@@ -2,8 +2,6 @@
 
 # Specify exta option for ceph like the username/keyring/etc. Can also be done with CEPH_ARGS global variable
 #CEPH_OPT="-n client.username"
-CEPH_BIN=$(which ceph 2> /dev/null)
-JQ_BIN=$(which jq 2> /dev/null)
 
 
 #
@@ -11,38 +9,36 @@ JQ_BIN=$(which jq 2> /dev/null)
 #
 function check_requirements()
 {
-  if $CEPH_BIN -v &> /dev/null; then
-    CEPH="$CEPH_BIN $CEPH_OPT"
-  else
-    echo "ERROR: Ceph binary not found, please check you have ceph client installed and avaiable in your path"
+
+  # List of command dependencies
+  local bin_dep="ceph rados rbd osdmaptool jq"
+
+  for cmd in $bin_dep; do
+    $cmd --version  >/dev/null 2>&1 || { echo >&2 "ERROR: $cmd cannot be found... Aborting."; return 1; }
+  done
+
+  CEPH="ceph $CEPH_OPT"
+
+  if ! $CEPH -s &> /dev/null; then
+    echo "ERROR: Cannot connect to cluster, please check your username permissions"
+    echo "ERROR: Command $CEPH -s failed"
     return 1
   fi
 
-   if ! $CEPH -s &> /dev/null; then
-    echo "ERROR: Cannot connect to cluster, please check your username permissions"
-    echo "ERROT: Command $CEPH -s failed"
-    return 1
-  fi
- 
- if $JQ_BIN --version &> /dev/null; then
-    JQ="$JQ_BIN -M --raw-output"
-  else
-    echo "ERROR: JQ binary not found, please check you have jq installed and avaiable in your path"
-    return 1
-  fi
+    JQ="jq -M --raw-output"
 }
 
 #
 #  Print the host that hosts a specific PG
 #
 function find_host_from_pg() {
-local PGID=$1
-echo "PG $PGID has been found at (first is primary) : "
+  local PGID=$1
+  echo "PG $PGID has been found at (first is primary) : "
 
-for osd in $(ceph pg $PGID  query | $JQ -cr .up[]); do
-	echo -n "OSD:osd.$osd | Host : "
-	$CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host
-done
+  for osd in $($CEPH pg $PGID  query | $JQ -cr .up[]); do
+  	echo -n "OSD:osd.$osd | Host : "
+  	$CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host
+  done
 }
 
 #
@@ -70,9 +66,9 @@ function find_prim_pg_from_osd() {
 #  Print all pgs (primay & secondary) hosted by an OSD
 #
 function find_all_pg_from_osd() {
-  local OSD=$1
-  echo "INFO: Looking for all PGs mapped to OSD $OSD"
-  ceph pg dump --forma json &> /dev/null | $JQ -M --argjson osd $OSD '.pg_stats[] | select(.up[]==$osd).pgid'
+  local osd=$1
+  echo "INFO: Looking for all PGs mapped to OSD $osd"
+  $CEPH pg dump --forma json &> /dev/null | $JQ -M --argjson osd $osd '.pg_stats[] | select(.up[]==$osd).pgid'
 }
 
 
@@ -81,15 +77,15 @@ function find_all_pg_from_osd() {
 #
 function get_rbd_prefix() {
 
-  local POOL=$1
-  local RBD=$2
+  local pool=$1
+  local rbd=$2
   
-  local PREFIX=$(rbd --image $RBD -p $POOL info --format json 2> /dev/null | jq --raw-output .block_name_prefix)
+  local prefix=$(rbd --image $rbd -p $pool info --format json 2> /dev/null | jq --raw-output .block_name_prefix)
   if [ -z $rbd_prefix ]; then
     echo "ERROR: Unable to find RBD Prefix for image $pool/$rbd"
     exit 1
   else
-    echo $PREFIX
+    echo $prefix
   fi
 
 }
@@ -127,18 +123,16 @@ function find_prim_host_from_rbd() {
   echo "INFO: RBD image $pool/$rbd has prefix $rbd_prefix; now finding primary host..."
 
   echo "INFO: Dumping OSD map to $osdmap_t"
-  if ! ceph osd getmap > $osdmap_t; then
+  if ! $CEPH osd getmap > $osdmap_t; then
     echo "ERROR: failed to retrieve OSD map"
     exit 1
   fi
 
   echo "INFO: Dumping OSD tree to $osdtree_t"
-  if ! ceph osd tree --format json > $osdtree_t; then
+  if ! $CEPH osd tree --format json > $osdtree_t; then
     echo "ERROR: failed to retrieve OSD tree"
     exit 1
   fi
-
- echo
 
 # For each object in the RBD image
   for obj in $(rados -p $pool ls | grep $rbd_prefix);
