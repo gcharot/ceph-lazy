@@ -64,7 +64,7 @@ function get_rbd_prefix() {
   local POOL=$1
   local RBD=$2
   
-  local PREFIX=$(rbd --image $2 -p $POOL info --format json 2> /dev/null | jq --raw-output .block_name_prefix)
+  local PREFIX=$(rbd --image $RBD -p $POOL info --format json 2> /dev/null | jq --raw-output .block_name_prefix)
 
   echo $PREFIX
 }
@@ -84,18 +84,45 @@ function count_rbd_object() {
 }
 
 
+#
+#  Find primary storage host for a given RBD image
+#
 function find_prim_host_from_rbd() {
 
   local pool=$1
   local rbd=$2
+  local osd="null"
+
+  local osdmap_t=$(mktemp)
+  local osdtree_t=$(mktemp)
   local rbd_prefix=$(get_rbd_prefix $pool $rbd)
 
-  echo "INFO: RBD image $pool/rbd_prefix has prefix $rbd_prefix; now finding primary hosts, please wait..."
+  echo "INFO: RBD image $pool/$rbd has prefix $rbd_prefix; now finding primary host..."
+
+  echo "INFO: Dumping OSD map to $osdmap_t"
+  if ! ceph osd getmap > $osdmap_t; then
+    echo "ERROR: failed to retrieve osd map"
+    exit 1
+  fi
+  echo "INFO: Dumping OSD tree to $osdtree_t"
+
+  if ! ceph osd tree --format json > $osdtree_t; then
+    echo "ERROR: failed to retrieve osd tree"
+    exit 1
+  fi
+
+ echo
 
   for obj in $(rados -p $pool ls | grep $rbd_prefix);
     do
-      ceph osd find $(ceph osd map $pool $obj --format json | jq --raw-output .acting_primary) | jq .crush_location.host;
+# Mapping object to osd. osdmaptoo does not support json output so using dirty sed.
+      osd=$(osdmaptool  --test-map-object $obj $osdmap_t 2>/dev/null | sed -r 's/.*\[([[:digit:]]+),.*/\1/' | grep -v osdmaptool)
+# Mapping osd to host
+      $JQ --argjson osd $osd  '.nodes[] | select(.type=="host") | select(.children[] == $osd).name' $osdtree_t
   done | sort -u
+
+# Cleaning files
+  rm -f $osdtree_t $osdmap_t
 
 }
 
