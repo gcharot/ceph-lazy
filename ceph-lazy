@@ -65,8 +65,13 @@ function get_rbd_prefix() {
   local RBD=$2
   
   local PREFIX=$(rbd --image $RBD -p $POOL info --format json 2> /dev/null | jq --raw-output .block_name_prefix)
+  if [ -z $rbd_prefix ]; then
+    echo "ERROR: Unable to find RBD Prefix for image $pool/$rbd"
+    exit 1
+  else
+    echo $PREFIX
+  fi
 
-  echo $PREFIX
 }
 
 
