@@ -28,6 +28,7 @@ function check_requirements()
     JQ="jq -M --raw-output"
 }
 
+
 #
 #  Print the host that hosts a specific PG
 #
@@ -36,10 +37,11 @@ function find_host_from_pg() {
   echo "PG $PGID has been found at (first is primary) : "
 
   for osd in $($CEPH pg $PGID  query | $JQ -cr .up[]); do
-  	echo -n "OSD:osd.$osd | Host : "
+  	echo -n "OSD:osd.$osd | Host:"
   	$CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host
   done
 }
+
 
 #
 #  Print the host that hosts a specific object
@@ -89,6 +91,7 @@ function get_rbd_prefix() {
   fi
 
 }
+
 
 #
 #  Count number of object in a RBD image
@@ -146,6 +149,32 @@ function find_prim_host_from_rbd() {
 # Cleaning files
   rm -f $osdtree_t $osdmap_t
 }
+
+#
+#  Find most used (space) OSD
+#
+function find_most_used_osd() {
+
+  local osd=$($CEPH pg dump --format json 2> /dev/null| $JQ '.osd_stats | max_by(.kb_used) | .osd')
+
+  local host=$($CEPH osd find $osd 2> /dev/null | $JQ .crush_location.host)
+
+  echo "OSD:osd.${osd} | host:$host"
+}
+
+
+#
+#  Find less used (space) OSD
+#
+function find_less_used_osd() {
+
+  local osd=$($CEPH pg dump --format json 2> /dev/null| $JQ '.osd_stats | min_by(.kb_used) | .osd')
+
+  local host=$($CEPH osd find $osd 2> /dev/null | $JQ .crush_location.host)
+
+  echo "OSD:osd.${osd} | host:$host"
+}
+
 
 # Check if all requirements are met
 check_requirements || exit 1
