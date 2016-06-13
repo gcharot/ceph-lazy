@@ -83,7 +83,7 @@ function get_rbd_prefix() {
   local rbd=$2
   
   local prefix=$(rbd --image $rbd -p $pool info --format json 2> /dev/null | jq --raw-output .block_name_prefix)
-  if [ -z $rbd_prefix ]; then
+  if [ -z $prefix ]; then
     echo "ERROR: Unable to find RBD Prefix for image $pool/$rbd"
     exit 1
   else
