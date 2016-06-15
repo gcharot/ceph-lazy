@@ -5,6 +5,22 @@
 
 
 #
+#  Print info message to stderr
+#
+function echoinfo() {
+  printf "INFO: %s\n" "$*" >&2;
+}
+
+
+#
+#  Print error message to stderr
+#
+function echoerr() {
+  printf "ERROR: %s\n" "$*" >&2;
+}
+
+
+#
 #  Check dependencies
 #
 function check_requirements()
@@ -14,27 +30,29 @@ function check_requirements()
   local bin_dep="ceph rados rbd osdmaptool jq"
 
   for cmd in $bin_dep; do
-    $cmd --version  >/dev/null 2>&1 || { echo >&2 "ERROR: $cmd cannot be found... Aborting."; return 1; }
+    [ $DEBUG -eq 1 ] && echoinfo "Checking for $cmd..."
+    $cmd --version  >/dev/null 2>&1 || { echoerr "ERROR: $cmd cannot be found... Aborting."; return 1; }
   done
 
   CEPH="ceph $CEPH_OPT"
 
+  [ $DEBUG -eq 1 ] && echoinfo "Checking Ceph connectivity & basic permissions..."
+
   if ! $CEPH -s &> /dev/null; then
-    echo "ERROR: Cannot connect to cluster, please check your username permissions"
-    echo "ERROR: Command $CEPH -s failed"
+    echoerr "Cannot connect to cluster, please check your username & permissions"
+    echoerr "Command $CEPH -s failed"
     return 1
   fi
 
     JQ="jq -M --raw-output"
 }
 
-
 #
 #  Print the host that hosts a specific PG
 #
 function find_host_from_pg() {
   local PGID=$1
-  echo "PG $PGID has been found at (first is primary) : "
+  echoinfo "PG $PGID has been found at (first is primary) : "
 
   for osd in $($CEPH pg $PGID  query | $JQ -cr .up[]); do
   	echo -n "OSD:osd.$osd | Host:"
@@ -49,7 +67,7 @@ function find_host_from_pg() {
 function find_host_from_object() {
   local OBJID=$1
   local PGID=$($CEPH osd map rbd $OBJID --format json 2> /dev/null | $JQ -cr .pgid)
-  echo $OBJID found into PG $PGID 
+  [ $DEBUG -eq 1 ] && echoinfo $OBJID found into PG $PGID 
   find_host_from_pg $PGID
 }
 
@@ -59,7 +77,7 @@ function find_host_from_object() {
 #
 function find_prim_pg_from_osd() {
   local POSD=$1
-  echo "INFO: Looking for primary PGs beloging to OSD $POSD"
+  [ $DEBUG -eq 1 ] && echoinfo "INFO: Looking for primary PGs beloging to OSD $POSD"
   $CEPH pg dump --format json 2>/dev/null | $JQ --argjson posd $POSD '.pg_stats[] | select(.acting_primary==$posd).pgid'
 }
 
@@ -69,7 +87,7 @@ function find_prim_pg_from_osd() {
 #
 function find_all_pg_from_osd() {
   local osd=$1
-  echo "INFO: Looking for all PGs mapped to OSD $osd"
+  [ $DEBUG -eq 1 ] && echoinfo "INFO: Looking for all PGs mapped to OSD $osd"
   $CEPH pg dump --forma json &> /dev/null | $JQ -M --argjson osd $osd '.pg_stats[] | select(.up[]==$osd).pgid'
 }
 
@@ -84,7 +102,7 @@ function get_rbd_prefix() {
   
   local prefix=$(rbd --image $rbd -p $pool info --format json 2> /dev/null | jq --raw-output .block_name_prefix)
   if [ -z $prefix ]; then
-    echo "ERROR: Unable to find RBD Prefix for image $pool/$rbd"
+    echoerr "Unable to find RBD Prefix for image $pool/$rbd"
     exit 1
   else
     echo $prefix
@@ -102,11 +120,12 @@ function count_rbd_object() {
   local RBD=$2
   local RBD_PREFIX=$(get_rbd_prefix $POOL $RBD)
 
-  echo "INFO: RBD image $POOL/RBD has prefix $PREFIX; now couning objects..."
+  echoinfo "RBD image $POOL/RBD has prefix $RBD_PREFIX; now couning objects..."
 
-  local RBD_OBJ=$(rados -p $POOL ls | grep $RBD_PREFIX | wc -l)
+  local nb_obj=$(rados -p $POOL ls | grep $RBD_PREFIX | wc -l)
 
-  echo "INFO: RBD image $POOL/RBD has $RBD_OBJ objects"
+  echoinfo "RBD image $POOL/RBD has $nb_obj objects"
+  echo $nb_obj
 }
 
 
@@ -123,17 +142,18 @@ function find_prim_host_from_rbd() {
   local osdtree_t=$(mktemp)
   local rbd_prefix=$(get_rbd_prefix $pool $rbd)
 
-  echo "INFO: RBD image $pool/$rbd has prefix $rbd_prefix; now finding primary host..."
+  [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has prefix $rbd_prefix; now finding primary host..."
 
-  echo "INFO: Dumping OSD map to $osdmap_t"
+  [ $DEBUG -eq 1 ] && echoinfo "Dumping OSD map to $osdmap_t"
   if ! $CEPH osd getmap > $osdmap_t; then
-    echo "ERROR: failed to retrieve OSD map"
+    echoerr "Failed to retrieve OSD map"
     exit 1
   fi
 
-  echo "INFO: Dumping OSD tree to $osdtree_t"
+  [ $DEBUG -eq 1 ] && echoinfo "INFO: Dumping OSD tree to $osdtree_t"
+
   if ! $CEPH osd tree --format json > $osdtree_t; then
-    echo "ERROR: failed to retrieve OSD tree"
+    echoerr "Failed to retrieve OSD tree"
     exit 1
   fi
 
@@ -226,6 +246,16 @@ function find_most_write_pg() {
 
   echo "PG:$pgid | OSD:osd.$osd | Host:$host"
 }
+
+
+if [ "$1" = "-d" ]; then
+  echoinfo "Debug mode activated"
+  DEBUG=1
+  shift
+else
+  DEBUG=0
+fi
+
 
 # Check if all requirements are met
 check_requirements || exit 1
