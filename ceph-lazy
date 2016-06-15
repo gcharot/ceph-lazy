@@ -20,6 +20,48 @@ function echoerr() {
 }
 
 
+function help() {
+  >&2 echo "
+Usage : ceph-lazy [-d | -h] [command] [parameters]
+    
+Ceph complex quering tool
+
+OPTIONS
+========
+    -d          Activate debug mode
+    -h          Print help
+
+COMMANDS
+=========
+
+    Placement groups
+    -----------------
+    pg-get-host       pgid                          Find PG storage hosts (first is primary) 
+    pg-most-write                                   Find most written PG (nb operations)
+    pg-most-write-kb                                Find most written PG (data written)
+    pg-most-read                                    Find most read PG (nb operations)
+    pg-most-read-kb                                 Find most read PG (data read)
+
+    RBD
+    ----
+    rbd-prefix        pool_name image_name          Return RBD image prefix
+    rbd-count         pool_name image_name          Count number of object in a RBD image
+    rbd-host          pool_name image_name          Find RBD primary storage hosts
+
+    OSD
+    ----
+    osd-most-used                                   Show the most used OSD (capacity)
+    osd-less-used                                   Show the less used OSD (capacity)
+    osd-get-ppg       pgid                          Show all primaries PGS hosted on a OSD
+    osd-get-ppg       pgid                          Show all PGS hosted on a OSD
+
+    Objects
+    --------
+    object-get-host   object_id                     Find object storage hosts (first is primary)
+  " 
+
+}
+
 #
 #  Check dependencies
 #
@@ -247,7 +289,13 @@ function find_most_write_pg() {
   echo "PG:$pgid | OSD:osd.$osd | Host:$host"
 }
 
+# Print help if no argument is given
+if [ $# -eq 0 ]; then
+  help
+  exit 1
+fi
 
+# Activate debug mode if -d is specified
 if [ "$1" = "-d" ]; then
   echoinfo "Debug mode activated"
   DEBUG=1
@@ -259,6 +307,8 @@ fi
 
 # Check if all requirements are met
 check_requirements || exit 1
+
+
 
 #find_host_from_pg 0.1c
 
