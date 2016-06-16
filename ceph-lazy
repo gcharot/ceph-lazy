@@ -21,8 +21,7 @@ function echoerr() {
 
 
 function help() {
-  >&2 echo "
-Usage : ceph-lazy [-d | -h] [command] [parameters]
+  >&2 echo "Usage : ceph-lazy [-d | -h] [command] [parameters]
     
 Ceph complex quering tool
 
@@ -38,14 +37,18 @@ COMMANDS
     -----------------
     pg-get-host       pgid                          Find PG storage hosts (first is primary) 
     pg-most-write                                   Find most written PG (nb operations)
+    pg-less-write                                   Find less written PG (nb operations)
     pg-most-write-kb                                Find most written PG (data written)
+    pg-less-write-kb                                Find less written PG (data written)
     pg-most-read                                    Find most read PG (nb operations)
+    pg-less-read                                    Find less read PG (nb operations)
     pg-most-read-kb                                 Find most read PG (data read)
+    pg-less-read-kb                                 Find less read PG (data read)
 
     RBD
     ----
     rbd-prefix        pool_name image_name          Return RBD image prefix
-    rbd-count         pool_name image_name          Count number of object in a RBD image
+    rbd-count         pool_name image_name          Count number of objects in a RBD image
     rbd-host          pool_name image_name          Find RBD primary storage hosts
 
     OSD
@@ -93,8 +96,16 @@ function check_requirements()
 #  Print the host that hosts a specific PG
 #
 function find_host_from_pg() {
-  local PGID=$1
-  echoinfo "PG $PGID has been found at (first is primary) : "
+
+  if [ $# -eq 1 ]; then
+    local PGID=$1
+  else
+    echoerr "This command requires one argument"
+    help
+    exit 1
+  fi
+
+  [ $DEBUG -eq 1 ] && echoinfo "PG $PGID has been found at (first is primary) : "
 
   for osd in $($CEPH pg $PGID  query | $JQ -cr .up[]); do
   	echo -n "OSD:osd.$osd | Host:"
@@ -139,8 +150,14 @@ function find_all_pg_from_osd() {
 #
 function get_rbd_prefix() {
 
-  local pool=$1
-  local rbd=$2
+  if [ $# -eq 2 ]; then
+    local pool=$1
+    local rbd=$2
+  else
+    echoerr "This command requires two arguments"
+    help
+    exit 1
+  fi
   
   local prefix=$(rbd --image $rbd -p $pool info --format json 2> /dev/null | jq --raw-output .block_name_prefix)
   if [ -z $prefix ]; then
@@ -158,15 +175,22 @@ function get_rbd_prefix() {
 #
 function count_rbd_object() {
 
-  local POOL=$1
-  local RBD=$2
-  local RBD_PREFIX=$(get_rbd_prefix $POOL $RBD)
+  if [ $# -eq 2 ]; then
+    local pool=$1
+    local rbd=$2
+  else
+    echoerr "This command requires two arguments"
+    help
+    exit 1
+  fi
 
-  echoinfo "RBD image $POOL/RBD has prefix $RBD_PREFIX; now couning objects..."
+  local rbd_prefix=$(get_rbd_prefix $pool $rbd)
 
-  local nb_obj=$(rados -p $POOL ls | grep $RBD_PREFIX | wc -l)
+  [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has prefix $rbd_prefix; now couning objects..."
 
-  echoinfo "RBD image $POOL/RBD has $nb_obj objects"
+  local nb_obj=$(rados -p $pool ls | grep $RBD_PREFIX | wc -l)
+
+  [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has $nb_obj objects"
   echo $nb_obj
 }
 
@@ -176,12 +200,19 @@ function count_rbd_object() {
 #
 function find_prim_host_from_rbd() {
 
-  local pool=$1
-  local rbd=$2
-  local osd="null"
+ if [ $# -eq 2 ]; then
+    local pool=$1
+    local rbd=$2
+  else
+    echoerr "This command requires two arguments"
+    help
+    exit 1
+  fi
 
+  local osd="null"
   local osdmap_t=$(mktemp)
   local osdtree_t=$(mktemp)
+  # Get RBD image prefix
   local rbd_prefix=$(get_rbd_prefix $pool $rbd)
 
   [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has prefix $rbd_prefix; now finding primary host..."
@@ -218,7 +249,6 @@ function find_prim_host_from_rbd() {
 function find_most_used_osd() {
 
   local osd=$($CEPH pg dump --format json 2> /dev/null| $JQ '.osd_stats | max_by(.kb_used) | .osd')
-
   local host=$($CEPH osd find $osd 2> /dev/null | $JQ .crush_location.host)
 
   echo "OSD:osd.${osd} | host:$host"
@@ -231,7 +261,6 @@ function find_most_used_osd() {
 function find_less_used_osd() {
 
   local osd=$($CEPH pg dump --format json 2> /dev/null| $JQ '.osd_stats | min_by(.kb_used) | .osd')
-
   local host=$($CEPH osd find $osd 2> /dev/null | $JQ .crush_location.host)
 
   echo "OSD:osd.${osd} | host:$host"
@@ -309,6 +338,42 @@ fi
 check_requirements || exit 1
 
 
+# Call proper function
+case $1 in
+  "-h")
+    help
+    exit 0
+    ;;
+  "pg-get-host")
+    find_host_from_pg $2
+    ;;
+  "pg-most-write")
+    find_most_write_pg
+    ;;
+  "pg-less-write")
+    find_less_write_pg
+    ;;
+  "pg-most-write-kb")
+    find_most_write_kb_pg
+    ;;
+  "pg-less-write-kb")
+    find_less_write_kb_pg
+    ;;
+  "rbd-prefix")
+    get_rbd_prefix $1 $2
+    ;;
+  "rbd-count")
+    count_rbd_object $1 $2
+    ;;
+  "rbd-host")
+    find_prim_host_from_rbd $1 $2
+    ;;
+  *)
+    echoerr "Unknown command : $1"
+    help
+    exit 1
+    ;;
+esac
 
 #find_host_from_pg 0.1c
 
@@ -327,6 +392,6 @@ check_requirements || exit 1
 
 #find_prim_host_from_rbd rbd myrbd
 
-find_less_write_kb_pg
+#find_less_write_kb_pg
 
-find_most_write_kb_pg
+#find_most_write_kb_pg
