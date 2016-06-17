@@ -124,14 +124,18 @@ function find_host_from_object() {
     local pool=$1
     local objid=$2
   else
-    echoerr "This command requires one argument"
+    echoerr "This command requires two arguments"
     help
     exit 1
   fi
 
   local pgid=$($CEPH osd map $pool $objid --format json 2> /dev/null | $JQ -cr .pgid)
+  
   [ $DEBUG -eq 1 ] && echoinfo $objid found into PG $pgid 
-  find_host_from_pg $pgid
+  
+  while read host; do
+        echo "PG:$pgid | $host"
+  done < <(find_host_from_pg $pgid)
 }
 
 
