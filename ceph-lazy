@@ -55,8 +55,8 @@ COMMANDS
     ----
     osd-most-used                                   Show the most used OSD (capacity)
     osd-less-used                                   Show the less used OSD (capacity)
-    osd-get-ppg       pgid                          Show all primaries PGS hosted on a OSD
-    osd-get-ppg       pgid                          Show all PGS hosted on a OSD
+    osd-get-ppg       osd                           Show all primaries PGS hosted on a OSD
+    osd-get-ppg       osd                           Show all PGS hosted on a OSD
 
     Objects
     --------
@@ -129,9 +129,17 @@ function find_host_from_object() {
 #  Print all primary pgs hosted by an OSD
 #
 function find_prim_pg_from_osd() {
-  local POSD=$1
-  [ $DEBUG -eq 1 ] && echoinfo "INFO: Looking for primary PGs beloging to OSD $POSD"
-  $CEPH pg dump --format json 2>/dev/null | $JQ --argjson posd $POSD '.pg_stats[] | select(.acting_primary==$posd).pgid'
+
+  if [ $# -eq 1 ]; then
+    local posd=$1
+  else
+    echoerr "This command requires one argument"
+    help
+    exit 1
+  fi
+
+  [ $DEBUG -eq 1 ] && echoinfo "INFO: Looking for primary PGs beloging to OSD $posd"
+  $CEPH pg dump --format json 2>/dev/null | $JQ --argjson posd $posd '.pg_stats[] | select(.acting_primary==$posd).pgid'
 }
 
 
@@ -139,7 +147,15 @@ function find_prim_pg_from_osd() {
 #  Print all pgs (primay & secondary) hosted by an OSD
 #
 function find_all_pg_from_osd() {
-  local osd=$1
+
+  if [ $# -eq 1 ]; then
+    local osd=$1
+  else
+    echoerr "This command requires one argument"
+    help
+    exit 1
+  fi
+  
   [ $DEBUG -eq 1 ] && echoinfo "INFO: Looking for all PGs mapped to OSD $osd"
   $CEPH pg dump --forma json &> /dev/null | $JQ -M --argjson osd $osd '.pg_stats[] | select(.up[]==$osd).pgid'
 }
@@ -188,7 +204,7 @@ function count_rbd_object() {
 
   [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has prefix $rbd_prefix; now couning objects..."
 
-  local nb_obj=$(rados -p $pool ls | grep $RBD_PREFIX | wc -l)
+  local nb_obj=$(rados -p $pool ls | grep $rbd_prefix | wc -l)
 
   [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has $nb_obj objects"
   echo $nb_obj
@@ -214,6 +230,9 @@ function find_prim_host_from_rbd() {
   local osdtree_t=$(mktemp)
   # Get RBD image prefix
   local rbd_prefix=$(get_rbd_prefix $pool $rbd)
+
+# Exit if we received an empty prefix
+  [ -z $rbd_prefix ] && exit 1
 
   [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has prefix $rbd_prefix; now finding primary host..."
 
@@ -324,7 +343,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-# Activate debug mode if -d is specified
+# Activate debug mode if -d is specified as first parameter
 if [ "$1" = "-d" ]; then
   echoinfo "Debug mode activated"
   DEBUG=1
@@ -360,13 +379,25 @@ case $1 in
     find_less_write_kb_pg
     ;;
   "rbd-prefix")
-    get_rbd_prefix $1 $2
+    get_rbd_prefix $2 $3
     ;;
   "rbd-count")
-    count_rbd_object $1 $2
+    count_rbd_object $2 $3
     ;;
   "rbd-host")
-    find_prim_host_from_rbd $1 $2
+    find_prim_host_from_rbd $2 $3
+    ;;
+  "osd-most-used ")
+    find_most_used_osd
+    ;;
+  "osd-less-used ")
+    find_less_used_osd
+    ;;
+  "osd-get-ppg"=
+    find_prim_pg_from_osd $2
+    ;;
+  "osd-get-pg")
+    find_all_pg_from_osd $2
     ;;
   *)
     echoerr "Unknown command : $1"
