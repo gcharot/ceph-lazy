@@ -44,6 +44,7 @@ COMMANDS
     pg-less-read                                    Find less read PG (nb operations)
     pg-most-read-kb                                 Find most read PG (data read)
     pg-less-read-kb                                 Find less read PG (data read)
+    pg-empty                                        Find empty PGs (no stored object)
 
     RBD
     ----
@@ -118,10 +119,18 @@ function find_host_from_pg() {
 #  Print the host that hosts a specific object
 #
 function find_host_from_object() {
-  local OBJID=$1
-  local PGID=$($CEPH osd map rbd $OBJID --format json 2> /dev/null | $JQ -cr .pgid)
-  [ $DEBUG -eq 1 ] && echoinfo $OBJID found into PG $PGID 
-  find_host_from_pg $PGID
+
+  if [ $# -eq 1 ]; then
+    local objid=$1
+  else
+    echoerr "This command requires one argument"
+    help
+    exit 1
+  fi
+
+  local pgid=$($CEPH osd map rbd $objid --format json 2> /dev/null | $JQ -cr .pgid)
+  [ $DEBUG -eq 1 ] && echoinfo $objid found into PG $pgid 
+  find_host_from_pg $pgid
 }
 
 
@@ -138,7 +147,7 @@ function find_prim_pg_from_osd() {
     exit 1
   fi
 
-  [ $DEBUG -eq 1 ] && echoinfo "INFO: Looking for primary PGs beloging to OSD $posd"
+  [ $DEBUG -eq 1 ] && echoinfo "Looking for primary PGs beloging to OSD $posd"
   $CEPH pg dump --format json 2>/dev/null | $JQ --argjson posd $posd '.pg_stats[] | select(.acting_primary==$posd).pgid'
 }
 
@@ -156,7 +165,7 @@ function find_all_pg_from_osd() {
     exit 1
   fi
 
-  [ $DEBUG -eq 1 ] && echoinfo "INFO: Looking for all PGs mapped to OSD $osd"
+  [ $DEBUG -eq 1 ] && echoinfo "Looking for all PGs mapped to OSD $osd"
   $CEPH pg dump --forma json 2> /dev/null | $JQ -M --argjson osd $osd '.pg_stats[] | select(.up[]==$osd).pgid'
 }
 
@@ -337,6 +346,22 @@ function find_most_write_pg() {
   echo "PG:$pgid | OSD:osd.$osd | Host:$host"
 }
 
+
+#
+#  Find empty pgs (no object stored)
+#
+function find_empty_pg() {
+
+  $CEPH pg dump --format json | $JQ '.pg_stats[] | select(.stat_sum.num_objects == 0).pgid'
+
+}
+
+
+#
+#  MAIN
+#
+
+
 # Print help if no argument is given
 if [ $# -eq 0 ]; then
   help
@@ -398,6 +423,12 @@ case $1 in
     ;;
   "osd-get-pg")
     find_all_pg_from_osd $2
+    ;;
+  "pg-empty")
+    find_empty_pg
+    ;;
+  "object-get-host")
+    find_host_from_object $2
     ;;
   *)
     echoerr "Unknown command : $1"
