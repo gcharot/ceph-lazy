@@ -56,7 +56,7 @@ COMMANDS
     osd-most-used                                   Show the most used OSD (capacity)
     osd-less-used                                   Show the less used OSD (capacity)
     osd-get-ppg       osd                           Show all primaries PGS hosted on a OSD
-    osd-get-ppg       osd                           Show all PGS hosted on a OSD
+    osd-get-pg        osd                           Show all PGS hosted on a OSD
 
     Objects
     --------
@@ -155,9 +155,9 @@ function find_all_pg_from_osd() {
     help
     exit 1
   fi
-  
+
   [ $DEBUG -eq 1 ] && echoinfo "INFO: Looking for all PGs mapped to OSD $osd"
-  $CEPH pg dump --forma json &> /dev/null | $JQ -M --argjson osd $osd '.pg_stats[] | select(.up[]==$osd).pgid'
+  $CEPH pg dump --forma json 2> /dev/null | $JQ -M --argjson osd $osd '.pg_stats[] | select(.up[]==$osd).pgid'
 }
 
 
@@ -387,13 +387,13 @@ case $1 in
   "rbd-host")
     find_prim_host_from_rbd $2 $3
     ;;
-  "osd-most-used ")
+  "osd-most-used")
     find_most_used_osd
     ;;
-  "osd-less-used ")
+  "osd-less-used")
     find_less_used_osd
     ;;
-  "osd-get-ppg"=
+  "osd-get-ppg")
     find_prim_pg_from_osd $2
     ;;
   "osd-get-pg")
