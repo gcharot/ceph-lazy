@@ -61,7 +61,7 @@ COMMANDS
 
     Objects
     --------
-    object-get-host   object_id                     Find object storage hosts (first is primary)
+    object-get-host   pool_name object_id           Find object storage hosts (first is primary)
   " 
 
 }
@@ -120,15 +120,16 @@ function find_host_from_pg() {
 #
 function find_host_from_object() {
 
-  if [ $# -eq 1 ]; then
-    local objid=$1
+  if [ $# -eq 2 ]; then
+    local pool=$1
+    local objid=$2
   else
     echoerr "This command requires one argument"
     help
     exit 1
   fi
 
-  local pgid=$($CEPH osd map rbd $objid --format json 2> /dev/null | $JQ -cr .pgid)
+  local pgid=$($CEPH osd map $pool $objid --format json 2> /dev/null | $JQ -cr .pgid)
   [ $DEBUG -eq 1 ] && echoinfo $objid found into PG $pgid 
   find_host_from_pg $pgid
 }
@@ -352,7 +353,7 @@ function find_most_write_pg() {
 #
 function find_empty_pg() {
 
-  $CEPH pg dump --format json | $JQ '.pg_stats[] | select(.stat_sum.num_objects == 0).pgid'
+  $CEPH pg dump --format json 2>/dev/null | $JQ '.pg_stats[] | select(.stat_sum.num_objects == 0).pgid'
 
 }
 
@@ -428,7 +429,7 @@ case $1 in
     find_empty_pg
     ;;
   "object-get-host")
-    find_host_from_object $2
+    find_host_from_object $2 $3
     ;;
   *)
     echoerr "Unknown command : $1"
