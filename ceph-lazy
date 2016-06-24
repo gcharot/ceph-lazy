@@ -381,8 +381,6 @@ function find_most_write_pg() {
 }
 
 
---------
-
 #
 #  Find less read (data) pg
 #
@@ -501,7 +499,7 @@ case $1 in
     find_prim_host_from_rbd $2 $3
     ;;
   "rbd-size")
-    print_rbd_real_size
+    print_rbd_real_size $2 $3
     ;;
   "osd-most-used")
     find_most_used_osd
