@@ -130,7 +130,7 @@ function find_host_from_object() {
   fi
 
   local pgid=$($CEPH osd map $pool $objid --format json 2> /dev/null | $JQ -cr .pgid)
-  
+
   [ $DEBUG -eq 1 ] && echoinfo $objid found into PG $pgid 
   
   while read host; do
@@ -301,7 +301,7 @@ function find_less_used_osd() {
 
 
 #
-#  Find less write (data) pg
+#  Find less written (data) pg
 #
 function find_less_write_kb_pg() {
 
@@ -314,7 +314,7 @@ function find_less_write_kb_pg() {
 
 
 #
-#  Find most read (data) pg
+#  Find most written (data) pg
 #
 function find_most_write_kb_pg() {
 
@@ -327,7 +327,7 @@ function find_most_write_kb_pg() {
 
 
 #
-#  Find less write (operations) pg
+#  Find less written (operations) pg
 #
 function find_less_write_pg() {
 
@@ -340,11 +340,65 @@ function find_less_write_pg() {
 
 
 #
-#  Find most read (operations) pg
+#  Find most written (operations) pg
 #
 function find_most_write_pg() {
 
   local pgid=$($CEPH pg dump --format json 2> /dev/null| $JQ '.pg_stats | max_by(.stat_sum.num_write).pgid')
+  local osd=$($CEPH pg $pgid  query --format json | $JQ -cr .info.stats.up_primary)
+  local host=$($CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host)
+
+  echo "PG:$pgid | OSD:osd.$osd | Host:$host"
+}
+
+
+--------
+
+#
+#  Find less read (data) pg
+#
+function find_less_read_kb_pg() {
+
+  local pgid=$($CEPH pg dump --format json 2> /dev/null| $JQ '.pg_stats | min_by(.stat_sum.num_read_kb).pgid')
+  local osd=$($CEPH pg $pgid  query --format json | $JQ -cr .info.stats.up_primary)
+  local host=$($CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host)
+
+  echo "PG:$pgid | OSD:osd.$osd | Host:$host"
+}
+
+
+#
+#  Find most read (data) pg
+#
+function find_most_read_kb_pg() {
+
+  local pgid=$($CEPH pg dump --format json 2> /dev/null| $JQ '.pg_stats | max_by(.stat_sum.num_read_kb).pgid')
+  local osd=$($CEPH pg $pgid  query --format json | $JQ -cr .info.stats.up_primary)
+  local host=$($CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host)
+
+  echo "PG:$pgid | OSD:osd.$osd | Host:$host"
+}
+
+
+#
+#  Find less read (operations) pg
+#
+function find_less_read_pg() {
+
+  local pgid=$($CEPH pg dump --format json 2> /dev/null| $JQ '.pg_stats | min_by(.stat_sum.num_read).pgid')
+  local osd=$($CEPH pg $pgid query --format json | $JQ -cr .info.stats.up_primary)
+  local host=$($CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host)
+
+  echo "PG:$pgid | OSD:osd.$osd | Host:$host"
+}
+
+
+#
+#  Find most read (operations) pg
+#
+function find_most_read_pg() {
+
+  local pgid=$($CEPH pg dump --format json 2> /dev/null| $JQ '.pg_stats | max_by(.stat_sum.num_read).pgid')
   local osd=$($CEPH pg $pgid  query --format json | $JQ -cr .info.stats.up_primary)
   local host=$($CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host)
 
