@@ -300,7 +300,7 @@ function print_rbd_real_size {
     exit
   fi
 
-  rbd diff $pool/$rbd | awk '{ SUM += $2 } END { print SUM/1024/1024"}'
+  rbd diff $pool/$rbd | awk '{ SUM += $2 } END { print SUM/1024/1024 " MB" }'
 
 
 }
