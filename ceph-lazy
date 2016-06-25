@@ -204,7 +204,9 @@ function get_rbd_prefix() {
     help
     exit 1
   fi
-  
+
+  check_rbd_exists $pool $rbd
+
   local prefix=$(rbd --image $rbd -p $pool info --format json 2> /dev/null | jq --raw-output .block_name_prefix)
   if [ -z $prefix ]; then
     echoerr "Unable to find RBD Prefix for image $pool/$rbd"
@@ -230,6 +232,8 @@ function count_rbd_object() {
     exit 1
   fi
 
+  check_rbd_exists $pool $rbd
+
   local rbd_prefix=$(get_rbd_prefix $pool $rbd)
 
   [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has prefix $rbd_prefix; now couning objects..."
@@ -254,6 +258,8 @@ function find_prim_host_from_rbd() {
     help
     exit 1
   fi
+
+  check_rbd_exists $pool $rbd
 
   local osd="null"
   local osdmap_t=$(mktemp)
