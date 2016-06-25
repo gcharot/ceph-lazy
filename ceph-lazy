@@ -51,7 +51,7 @@ COMMANDS
     rbd-prefix        pool_name image_name          Return RBD image prefix
     rbd-count         pool_name image_name          Count number of objects in a RBD image
     rbd-host          pool_name image_name          Find RBD primary storage hosts
-    rbd-size          pool_name image_name          Print RBD real size
+    rbd-size          pool_name image_name          Print RBD image real size
 
     OSD
     ----
@@ -177,6 +177,21 @@ function find_all_pg_from_osd() {
 
 
 #
+#  Check if a given image exists
+#
+function check_rbd_exists(){
+
+  pool=$1
+  rbd=$2
+  
+  if ! rbd info -p $pool $rbd &> /dev/null; then
+    echoerr "Unable to find image $pool/$rbd"
+    exit 1
+  fi
+}
+
+
+#
 #  Return RBD prefix from image name
 #
 function get_rbd_prefix() {
@@ -295,13 +310,9 @@ function print_rbd_real_size {
 
   [ $DEBUG -eq 1 ] && echoinfo "Checking if RBD image exists..."
 
-  if ! rbd info -p $pool $rbd &> /dev/null; then
-    echoerr "Unable to find image $pool/$rbd"
-    exit
-  fi
+  check_rbd_exists $pool $rbd
 
   rbd diff $pool/$rbd | awk '{ SUM += $2 } END { print SUM/1024/1024 " MB" }'
-
 
 }
 
