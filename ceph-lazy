@@ -57,8 +57,8 @@ COMMANDS
     ----
     osd-most-used                                   Show the most used OSD (capacity)
     osd-less-used                                   Show the less used OSD (capacity)
-    osd-get-ppg       osd                           Show all primaries PGS hosted on a OSD
-    osd-get-pg        osd                           Show all PGS hosted on a OSD
+    osd-get-ppg       osd_id                        Show all primaries PGS hosted on a OSD
+    osd-get-pg        osd_id                        Show all PGS hosted on a OSD
 
     Objects
     --------
@@ -278,12 +278,14 @@ function find_prim_host_from_rbd() {
     exit 1
   fi
 
-  [ $DEBUG -eq 1 ] && echoinfo "INFO: Dumping OSD tree to $osdtree_t"
+  [ $DEBUG -eq 1 ] && echoinfo "Dumping OSD tree to $osdtree_t"
 
   if ! $CEPH osd tree --format json > $osdtree_t; then
     echoerr "Failed to retrieve OSD tree"
     exit 1
   fi
+
+  [ $DEBUG -eq 1 ] && echoinfo "Looking for hosts..."
 
 # For each object in the RBD image
   for obj in $(rados -p $pool ls | grep $rbd_prefix);
