@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ceph-lazy - Complex Ceph query tool
 
 

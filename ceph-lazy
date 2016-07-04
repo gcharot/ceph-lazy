@@ -545,23 +545,3 @@ case $1 in
     ;;
 esac
 
-#find_host_from_pg 0.1c
-
-#find_host_from_object rb.0.376d.2ae8944a.000000000016
-
-#find_pg $(ceph osd map rbd rb.0.376d.2ae8944a.000000000016 --format json | jq -cr .pgid)
-
-
-#find_prim_pg_from_osd 1
-
-#find_all_pg_from_osd 1
-
-#get_rbd_prefix rbd myrbd
-
-#count_rbd_object rbd myrbd
-
-#find_prim_host_from_rbd rbd myrbd
-
-#find_less_write_kb_pg
-
-#find_most_write_kb_pg
