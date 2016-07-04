@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ceph-lazy - Complex Ceph query tool
 
 
@@ -88,3 +89,9 @@ Usage : ceph-lazy [-d | -h] [command] [parameters]
 - Add more error controls
 - Find new command ideas
 - Optimise query performances when possible
+=======
+# ceph-lazy
+Ceph tool for lazy ops
+
+Still in early dev. Check out "initial" for code.
+>>>>>>> 627b6f11720b20da55673748da5a2633b694b24f
