@@ -324,6 +324,23 @@ function print_rbd_real_size {
 
 }
 
+
+#
+#  Print all RBD image real sizes 
+#
+
+function list_all_rbd_real_size {
+
+   if [ $# -eq 1 ]; then
+    local pool=$1
+  else
+    echoerr "This command requires one arguments"
+    help
+    exit 1
+  fi
+}
+
+
 #
 #  Find most used (space) OSD
 #
