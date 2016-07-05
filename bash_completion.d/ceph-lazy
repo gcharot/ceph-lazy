@@ -1,11 +1,11 @@
 _ceph-lazy()
 {
-  local cur prev opts
+  local cur prev all_opts commands
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-  commands="pg-get-host pg-most-write pg-less-write pg-most-write-kb pg-less-write-kb pg-most-read pg-less-read pg-most-read-kb pg-less-read-kb pg-empty rbd-prefix rbd-count rbd-host rbd-size osd-most-used osd-less-used osd-get-ppg osd-get-pg object-get-host"
+  commands="pg-get-host pg-most-write pg-less-write pg-most-write-kb pg-less-write-kb pg-most-read pg-less-read pg-most-read-kb pg-less-read-kb pg-empty rbd-prefix rbd-count rbd-host rbd-size rbd-all-size osd-most-used osd-less-used osd-get-ppg osd-get-pg object-get-host"
 
   all_opts="$commands -d -h"
 
