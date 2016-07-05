@@ -135,7 +135,7 @@ function find_host_from_object() {
   [ $DEBUG -eq 1 ] && echoinfo $objid found into PG $pgid 
   
   while read host; do
-        echo "PG:$pgid | $host"
+    echo "PG:$pgid | $host"
   done < <(find_host_from_pg $pgid)
 }
 
@@ -338,6 +338,14 @@ function list_all_rbd_real_size {
     help
     exit 1
   fi
+  local result_t=$(mktemp)
+
+  echoinfo "Looking for RBD images in pool $pool"
+
+   while read rbd; do
+    echoinfo "Inspecting image $rbd"
+    rbd diff $pool/$rbd | awk '{ SUM += $2 } END { print SUM/1024/1024 " MB" }'
+  done < <(rbd -p $pool ls)
 }
 
 
