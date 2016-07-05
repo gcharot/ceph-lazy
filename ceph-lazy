@@ -508,6 +508,18 @@ case $1 in
   "pg-less-write-kb")
     find_less_write_kb_pg
     ;;
+  "pg-most-read")
+    find_most_read_pg
+    ;;
+  "pg-less-read")
+    find_less_read_pg
+    ;;
+  "pg-most-read-kb")
+    find_most_read_kb_pg
+    ;;
+  "pg-less-read-kb")
+    find_less_read_kb_pg
+    ;;
   "rbd-prefix")
     get_rbd_prefix $2 $3
     ;;
