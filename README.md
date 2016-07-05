@@ -79,7 +79,7 @@ cp bash_completion.d/ceph-lazy /etc/bash_completion.d/
 
 ## HOW TO USE
 
-Simply execute the script with no parameter or use the -h option to get the list of options and commands. Using -d as first parameter enable verbose mode. General syntax usage is :
+Simply execute the script with no parameter or use the -h option to get the list of options and commands. Using -d as first parameter enable verbose mode (printed on stderr). General syntax usage is :
 
 ```
 Usage : ceph-lazy [-d | -h] [command] [parameters]
