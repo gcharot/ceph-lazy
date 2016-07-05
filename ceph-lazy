@@ -52,6 +52,7 @@ COMMANDS
     rbd-count         pool_name image_name          Count number of objects in a RBD image
     rbd-host          pool_name image_name          Find RBD primary storage hosts
     rbd-size          pool_name image_name          Print RBD image real size
+    rbd-all-size      pool_name                     Print all RBD image size (Top first)
 
     OSD
     ----
@@ -326,26 +327,25 @@ function print_rbd_real_size {
 
 
 #
-#  Print all RBD image real sizes 
+#  Print all RBD image real sizes - Top first
 #
 
 function list_all_rbd_real_size {
 
-   if [ $# -eq 1 ]; then
+  if [ $# -eq 1 ]; then
     local pool=$1
   else
     echoerr "This command requires one arguments"
     help
     exit 1
   fi
-  local result_t=$(mktemp)
 
-  echoinfo "Looking for RBD images in pool $pool"
+  [ $DEBUG -eq 1 ] && echoinfo "Looking for RBD images in pool $pool"
 
-   while read rbd; do
-    echoinfo "Inspecting image $rbd"
-    rbd diff $pool/$rbd | awk '{ SUM += $2 } END { print SUM/1024/1024 " MB" }'
-  done < <(rbd -p $pool ls)
+  while read rbd; do
+    [ $DEBUG -eq 1 ] && echoinfo "Inspecting image $rbd"
+    rbd diff $pool/$rbd | awk -v rbd="$rbd" '{ SUM += $2 } END { print SUM/1024/1024 " MB - " rbd }'
+  done < <(rbd -p $pool ls) | sort -rV
 }
 
 
