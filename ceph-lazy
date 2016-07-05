@@ -52,7 +52,7 @@ COMMANDS
     rbd-count         pool_name image_name          Count number of objects in a RBD image
     rbd-host          pool_name image_name          Find RBD primary storage hosts
     rbd-size          pool_name image_name          Print RBD image real size
-    rbd-all-size      pool_name                     Print all RBD image size (Top first)
+    rbd-all-size      pool_name                     Print all RBD images size (Top first)
 
     OSD
     ----
@@ -335,7 +335,7 @@ function list_all_rbd_real_size {
   if [ $# -eq 1 ]; then
     local pool=$1
   else
-    echoerr "This command requires one arguments"
+    echoerr "This command requires one argument"
     help
     exit 1
   fi
