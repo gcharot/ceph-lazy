@@ -52,6 +52,7 @@ COMMANDS
     rbd-count         pool_name image_name          Count number of objects in a RBD image
     rbd-host          pool_name image_name          Find RBD primary storage hosts
     rbd-size          pool_name image_name          Print RBD image real size
+    rbd-all-size      pool_name                     Print all RBD image size (Top first)
 
     OSD
     ----
@@ -135,7 +136,7 @@ function find_host_from_object() {
   [ $DEBUG -eq 1 ] && echoinfo $objid found into PG $pgid 
   
   while read host; do
-        echo "PG:$pgid | $host"
+    echo "PG:$pgid | $host"
   done < <(find_host_from_pg $pgid)
 }
 
@@ -323,6 +324,30 @@ function print_rbd_real_size {
   rbd diff $pool/$rbd | awk '{ SUM += $2 } END { print SUM/1024/1024 " MB" }'
 
 }
+
+
+#
+#  Print all RBD image real sizes - Top first
+#
+
+function list_all_rbd_real_size {
+
+  if [ $# -eq 1 ]; then
+    local pool=$1
+  else
+    echoerr "This command requires one arguments"
+    help
+    exit 1
+  fi
+
+  [ $DEBUG -eq 1 ] && echoinfo "Looking for RBD images in pool $pool"
+
+  while read rbd; do
+    [ $DEBUG -eq 1 ] && echoinfo "Inspecting image $rbd"
+    rbd diff $pool/$rbd | awk -v rbd="$rbd" '{ SUM += $2 } END { print SUM/1024/1024 " MB - " rbd }'
+  done < <(rbd -p $pool ls) | sort -rV
+}
+
 
 #
 #  Find most used (space) OSD
@@ -531,6 +556,9 @@ case $1 in
     ;;
   "rbd-size")
     print_rbd_real_size $2 $3
+    ;;
+  "rbd-all-size")
+    list_all_rbd_real_size $2
     ;;
   "osd-most-used")
     find_most_used_osd
