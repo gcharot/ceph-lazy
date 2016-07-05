@@ -557,6 +557,9 @@ case $1 in
   "rbd-size")
     print_rbd_real_size $2 $3
     ;;
+  "rbd-all-size")
+    list_all_rbd_real_size $2
+    ;;
   "osd-most-used")
     find_most_used_osd
     ;;
