@@ -68,6 +68,7 @@ Copy the ceph-lazy to a PATH directory and ensure the proper permissions are set
 ```
 cp ceph-lazy/ceph-lazy /usr/local/sbin/
 chown root:root /usr/local/sbin/ceph-lazy
+chmod u+x /usr/local/sbin/ceph-lazy
 ```
 
 If you want bash completion you can use the completion config file
