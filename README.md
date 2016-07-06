@@ -35,6 +35,7 @@ The current set of commands is as follow :
     rbd-prefix        pool_name image_name          Return RBD image prefix
     rbd-count         pool_name image_name          Count number of objects in a RBD image
     rbd-host          pool_name image_name          Find RBD primary storage hosts
+    rbd-osd           pool_name image_name          Find RBD primary OSDs
     rbd-size          pool_name image_name          Print RBD image real size
     rbd-all-size      pool_name                     Print all RBD images size (Top first)
 
@@ -72,7 +73,7 @@ chown root:root /usr/local/sbin/ceph-lazy
 chmod u+x /usr/local/sbin/ceph-lazy
 ```
 
-If you want bash completion you can use the completion config file
+If you want bash completion you can copy the completion config file.
 ```
 cp bash_completion.d/ceph-lazy /etc/bash_completion.d/
 ```

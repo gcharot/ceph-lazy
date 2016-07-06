@@ -51,6 +51,7 @@ COMMANDS
     rbd-prefix        pool_name image_name          Return RBD image prefix
     rbd-count         pool_name image_name          Count number of objects in a RBD image
     rbd-host          pool_name image_name          Find RBD primary storage hosts
+    rbd-osd           pool_name image_name          Find RBD primary OSDs
     rbd-size          pool_name image_name          Print RBD image real size
     rbd-all-size      pool_name                     Print all RBD images size (Top first)
 
@@ -291,7 +292,7 @@ function find_prim_host_from_rbd() {
 # For each object in the RBD image
   for obj in $(rados -p $pool ls | grep $rbd_prefix);
     do
-# Map object to osd. osdmaptoo does not support json output so using dirty sed.
+# Map object to osd. osdmaptoot does not support json output so using dirty sed.
       osd=$(osdmaptool  --test-map-object $obj $osdmap_t 2>/dev/null | sed -r 's/.*\[([[:digit:]]+),.*/\1/' | grep -v osdmaptool)
 # Map osd to host
       $JQ --argjson osd $osd  '.nodes[] | select(.type=="host") | select(.children[] == $osd).name' $osdtree_t
@@ -299,6 +300,54 @@ function find_prim_host_from_rbd() {
 
 # Cleaning files
   rm -f $osdtree_t $osdmap_t
+}
+
+
+#
+#  Find primary OSDs for a given RBD image
+#
+function find_prim_osd_from_rbd() {
+
+ if [ $# -eq 2 ]; then
+    local pool=$1
+    local rbd=$2
+  else
+    echoerr "This command requires two arguments"
+    help
+    exit 1
+  fi
+
+  check_rbd_exists $pool $rbd
+
+  local osd="null"
+  local osdmap_t=$(mktemp)
+  local osdtree_t=$(mktemp)
+  # Get RBD image prefix
+  local rbd_prefix=$(get_rbd_prefix $pool $rbd)
+
+# Exit if we received an empty prefix
+  [ -z $rbd_prefix ] && exit 1
+
+  [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has prefix $rbd_prefix; now finding primary host..."
+
+  [ $DEBUG -eq 1 ] && echoinfo "Dumping OSD map to $osdmap_t"
+  if ! $CEPH osd getmap > $osdmap_t; then
+    echoerr "Failed to retrieve OSD map"
+    exit 1
+  fi
+
+  [ $DEBUG -eq 1 ] && echoinfo "Looking for OSDs..."
+
+# For each object in the RBD image
+  for obj in $(rados -p $pool ls | grep $rbd_prefix);
+    do
+# Map object to osd. osdmaptoot does not support json output so using dirty sed.
+      osd=$(osdmaptool  --test-map-object $obj $osdmap_t 2>/dev/null | sed -r 's/.*\[([[:digit:]]+),.*/\1/' | grep -v osdmaptool)
+      echo "osd.${osd}"
+  done | sort -u
+
+# Cleaning files
+  rm -f $osdmap_t
 }
 
 
@@ -553,6 +602,9 @@ case $1 in
     ;;
   "rbd-host")
     find_prim_host_from_rbd $2 $3
+    ;;
+  "rbd-osd")
+    find_prim_osd_from_rbd $2 $3
     ;;
   "rbd-size")
     print_rbd_real_size $2 $3
