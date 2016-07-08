@@ -33,6 +33,10 @@ OPTIONS
 COMMANDS
 =========
 
+    Host
+    -----
+    host-get-osd      hostname                      List all OSD IDs attached to a particular node.
+
     Placement groups
     -----------------
     pg-get-host       pgid                          Find PG storage hosts (first is primary) 
@@ -93,7 +97,7 @@ function check_requirements()
     return 1
   fi
 
-    JQ="jq -M --raw-output"
+  JQ="jq -M --raw-output"
 }
 
 #
@@ -399,6 +403,32 @@ function list_all_rbd_real_size {
 
 
 #
+#  Print OSDs belonging to a particular storage host
+#
+
+function list_osd_from_host() {
+
+  if [ $# -eq 1 ]; then
+    local pool=$1
+  else
+    echoerr "This command requires one argument"
+    help
+    exit 1
+  fi
+
+  $CEPH osd tree --format json-pretty 2> /dev/null | $JQ  --argjson host $host '.nodes[] | select(.type=="host") | select(.name == $host).children[]'
+
+}
+
+
+#
+#  Print Total OSD usage of a particular storage host
+#
+
+
+
+
+#
 #  Find most used (space) OSD
 #
 function find_most_used_osd() {
@@ -566,6 +596,9 @@ case $1 in
   "-h")
     help
     exit 0
+    ;;
+  "host-get-osd")
+    list_osd_from_host $2
     ;;
   "pg-get-host")
     find_host_from_pg $2

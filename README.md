@@ -5,9 +5,9 @@ Ceph-lazy - Be efficient, be lazy !
 
 ## WHAT IS THAT
 
-Ceph CLI is very complete, it can do pretty much everything. However there are certain taks that require two or more steps with nasty grep/sed which usally take time and you usually forget to write them down for the next time.
+Ceph CLI is very complete, it can do pretty much everything. However there are certain taks that require two or more steps with nasty grep/sed which take time and you usually forget to write them down for the next time.
 
-For example, get the RBD real image size, list all primary PG from a particular OSD or even more complex queries like get all OSDs that hosts a particular RBD image.
+For example, get the RBD real image size, list all primary PG from a particular OSD or even more complex queries like get all OSDs or nodes that hosts a particular RBD image.
 Ceph-lazy does that for you so you don't loose time on piped commands and quickly get the result that you want.
 
 
@@ -16,6 +16,10 @@ Ceph-lazy does that for you so you don't loose time on piped commands and quickl
 Ceph-lazy is currently splitted into four categories, PGs - RBD - OSD and Objects; each category offers a number of commands. List of commands can be reviewed by using the -h option or invoking ceph-lazy without any argument.
 
 The current set of commands is as follow : 
+
+    Host
+    -----
+    host-get-osd      hostname                      List all OSD IDs attached to a particular node.
 
     Placement groups
     -----------------
