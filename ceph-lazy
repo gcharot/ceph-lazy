@@ -416,7 +416,7 @@ function list_osd_from_host() {
     exit 1
   fi
 
-  $CEPH osd tree --format json-pretty 2> /dev/null | $JQ  --argjson host $host '.nodes[] | select(.type=="host") | select(.name == $host).children[]'
+  $CEPH osd tree --format json-pretty 2> /dev/null | $JQ  --arg host $host '.nodes[] | select(.type=="host") | select(.name == $host).children[]'
 
 }
 
@@ -424,7 +424,6 @@ function list_osd_from_host() {
 #
 #  Print Total OSD usage of a particular storage host
 #
-
 
 
 
