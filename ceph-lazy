@@ -409,7 +409,7 @@ function list_all_rbd_real_size {
 function list_osd_from_host() {
 
   if [ $# -eq 1 ]; then
-    local pool=$1
+    local host=$1
   else
     echoerr "This command requires one argument"
     help
