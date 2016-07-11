@@ -36,6 +36,7 @@ COMMANDS
     Host
     -----
     host-get-osd      hostname                      List all OSD IDs attached to a particular node.
+    host-osd-usage    hostname                      Show total OSD space usage of a particular node.
 
     Placement groups
     -----------------
@@ -425,6 +426,37 @@ function list_osd_from_host() {
 #  Print Total OSD usage of a particular storage host
 #
 
+function show_host_osd_usage() {
+
+  if [ $# -eq 1 ]; then
+    local host=$1
+  else
+    echoerr "This command requires one argument"
+    help
+    exit 1
+  fi
+
+  local pgmap_t=$(mktemp)
+  local osd_used_kb=0
+  local total_used_kb=0
+
+  [ $DEBUG -eq 1 ] && echoinfo "Dumping PG map..."
+  if ! $CEPH pg dump_json 2>/dev/null > $pgmap_t; then
+    echoerr "Failed to retrieve PG map"
+    exit 1
+  fi
+
+  [ $DEBUG -eq 1 ] && echoinfo "Looking for all OSDs on host $host"
+
+  for osd in $(list_osd_from_host $host); do
+
+    osd_used_kb=$(jq -M --raw-output --argjson osd $osd '.osd_stats[] | select(.osd == $osd).kb_used' pgmap)
+    [ $DEBUG -eq 1 ] && echoinfo "OSD $osd uses $osd_used_kb"
+    let "total_used_kb=total_used_kb+osd_used_kb"
+  done
+
+  echo "Host: $host | Total_Used: $total_used_kb"
+}
 
 
 #
@@ -598,6 +630,9 @@ case $1 in
     ;;
   "host-get-osd")
     list_osd_from_host $2
+    ;;
+  "host-osd-usage")
+    show_host_osd_usage $2
     ;;
   "pg-get-host")
     find_host_from_pg $2
