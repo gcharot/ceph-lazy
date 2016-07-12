@@ -20,6 +20,7 @@ The current set of commands is as follow :
     Host
     -----
     host-get-osd      hostname                      List all OSD IDs attached to a particular node.
+    host-osd-usage    hostname                      Show total OSD space usage of a particular node (-d for details).
 
     Placement groups
     -----------------
@@ -57,7 +58,7 @@ The current set of commands is as follow :
 
 ## WHAT ARE THE DEPENDENCIES
 
-You obviously needs the Ceph cli toolset binaries (ceph, rados, rbd, osdmaptool) as well as the jq utility which is used to parse json output. JSON parsing is much more efficient and easy to code than sed/grep/awk.
+You obviously needs the Ceph cli toolset binaries (ceph, rados, rbd, osdmaptool) as well as the jq utility which is used to parse json output. JSON parsing is much more efficient and easy to code than sed/grep/awk. The "bc" command is required for the "host-osd-usage" command.
 
 You also need the proper cephx permissions on both MONs and OSDs/pool you will query.
 

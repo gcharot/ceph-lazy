@@ -36,7 +36,7 @@ COMMANDS
     Host
     -----
     host-get-osd      hostname                      List all OSD IDs attached to a particular node.
-    host-osd-usage    hostname                      Show total OSD space usage of a particular node.
+    host-osd-usage    hostname                      Show total OSD space usage of a particular node (-d for details).
 
     Placement groups
     -----------------
@@ -466,7 +466,7 @@ function show_host_osd_usage() {
     let "total_used_kb=total_used_kb+osd_used_kb"
     let "total_available_kb=total_available_kb+osd_available_kb"
     let "total_size_kb=total_size_kb+osd_size_kb"
-    
+
   done
 
   echo "Host: $host | Total_Size: $(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used: $(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_available: $(echo "scale=1;$total_available_kb/1024/1024" | bc -l)GB"
