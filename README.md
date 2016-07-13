@@ -10,10 +10,13 @@ Ceph CLI is very complete, it can do pretty much everything. However there are c
 For example, get the RBD real image size, list all primary PG from a particular OSD or even more complex queries like get all OSDs or nodes that hosts a particular RBD image.
 Ceph-lazy does that for you so you don't loose time on piped commands and quickly get the result that you want.
 
+Ceph-lazy DOES NOT perform any write operation on your cluster, ONLY READS.
+
 
 ## WHAT CAN I DO
 
-Ceph-lazy is currently splitted into five categories: Host - PGs - RBD - OSD and Objects; each category offers a number of commands. List of commands can be reviewed by using the -h option or invoking ceph-lazy without any argument. Categories mainly refers to the type of input, for example host category will get info at a host level wheread RBD will report RBD information; pretty obvious !
+Ceph-lazy is currently splitted into five categories: Host - PGs - RBD - OSD and Objects; each category offers a number of commands. List of commands can be reviewed by using the -h option or invoking ceph-lazy without any argument. 
+Categories mainly refers to the type of input, for example host category will get info at a host level whereas RBD will report RBD information; pretty obvious !
 
 The current set of commands is as follow : 
 
@@ -61,7 +64,7 @@ The current set of commands is as follow :
 
 ## WHAT ARE THE DEPENDENCIES
 
-You obviously needs the Ceph cli toolset binaries (ceph, rados, rbd, osdmaptool) as well as the jq utility which is used to parse json output. JSON parsing is much more efficient and easy to code than sed/grep/awk. The "bc" command is required for the "host-osd-usage" command.
+You obviously needs the Ceph cli toolset binaries (ceph, rados, rbd, osdmaptool) as well as the jq utility which is used to parse json output. JSON parsing is much more efficient and easy to code than sed/grep/awk. The "bc" command is required for the "host-osd-usage" and "host-all-usage"commands.
 
 You also need the proper cephx permissions on both MONs and OSDs/pool you will query.
 
@@ -81,14 +84,14 @@ chown root:root /usr/local/sbin/ceph-lazy
 chmod u+x /usr/local/sbin/ceph-lazy
 ```
 
-If you want bash completion you can copy the completion config file.
+If you want to enable bash completion you can copy the completion config file.
 ```
-cp bash_completion.d/ceph-lazy /etc/bash_completion.d/
+cp ceph-lazy/bash_completion.d/ceph-lazy /etc/bash_completion.d/
 ```
 
 ## HOW TO USE
 
-Simply execute the script with no parameter or use the -h option to get the list of options and commands. Using -d as first parameter enable verbose mode (printed on stderr). General syntax usage is :
+Simply execute ceph-lazy with no parameter or use the -h option to get the list of options and commands. Using -d as first parameter enable verbose mode (printed on stderr). General syntax usage is :
 
 ```
 Usage : ceph-lazy [-d | -h] [command] [parameters]
