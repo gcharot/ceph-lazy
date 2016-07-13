@@ -2,11 +2,12 @@
 
 # Specify exta option for ceph like the username/keyring/etc. Can also be done with CEPH_ARGS global variable
 #CEPH_OPT="-n client.username"
-
+VERSION="1.1"
 
 #
 #  Print info message to stderr
 #
+
 function echoinfo() {
   printf "INFO: %s\n" "$*" >&2;
 }
@@ -15,6 +16,7 @@ function echoinfo() {
 #
 #  Print error message to stderr
 #
+
 function echoerr() {
   printf "ERROR: %s\n" "$*" >&2;
 }
@@ -23,7 +25,7 @@ function echoerr() {
 function help() {
   >&2 echo "Usage : ceph-lazy [-d | -h] [command] [parameters]
     
-Ceph complex quering tool
+Ceph complex quering tool - Version $VERSION
 
 OPTIONS
 ========
