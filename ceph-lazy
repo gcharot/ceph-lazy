@@ -337,15 +337,13 @@ function find_prim_osd_from_rbd() {
 # Exit if we received an empty prefix
   [ -z $rbd_prefix ] && exit 1
 
-  [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has prefix $rbd_prefix; now finding primary host..."
+  [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has prefix $rbd_prefix; now finding primary OSDs..."
 
   [ $DEBUG -eq 1 ] && echoinfo "Dumping OSD map to $osdmap_t"
   if ! $CEPH osd getmap > $osdmap_t; then
     echoerr "Failed to retrieve OSD map"
     exit 1
   fi
-
-  [ $DEBUG -eq 1 ] && echoinfo "Looking for OSDs..."
 
 # For each object in the RBD image
   for obj in $(rados -p $pool ls | grep $rbd_prefix);
