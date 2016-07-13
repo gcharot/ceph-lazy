@@ -467,7 +467,7 @@ function show_host_osd_usage() {
     exit 1
   fi
 
-  [ $DEBUG -eq 1 ] && echoinfo "Looking for all OSDs on host $host"
+  [ $DEBUG -eq 1 ] && echoinfo "Looking for all OSDs on host $host..."
 
   for osd in $(list_osd_from_host $host); do
 
@@ -513,6 +513,9 @@ function list_all_nodes_osd_usage() {
   for host in $(list_all_nodes); do
 
     [ $DEBUG -eq 1 ] && echoinfo "Looking at node $host..."
+
+    # Reset temporary variables
+    let osd_used_kb=total_used_kb=total_available_kb=osd_available_kb=total_size_kb=osd_size_kb=0
 
     for osd in $(list_osd_from_host $host); do
 
