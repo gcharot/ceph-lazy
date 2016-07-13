@@ -36,7 +36,9 @@ COMMANDS
     Host
     -----
     host-get-osd      hostname                      List all OSD IDs attached to a particular node.
+    host-get-nodes                                  List all storage nodes.
     host-osd-usage    hostname                      Show total OSD space usage of a particular node (-d for details).
+    host-all-usage                                  Show total OSD space usage of each nodes (-d for details)
 
     Placement groups
     -----------------
@@ -417,7 +419,19 @@ function list_osd_from_host() {
     exit 1
   fi
 
-  $CEPH osd tree --format json-pretty 2> /dev/null | $JQ  --arg host $host '.nodes[] | select(.type=="host") | select(.name == $host).children[]'
+  $CEPH osd tree --format json-pretty 2> /dev/null | $JQ  --arg host $host '.nodes[] | select(.type=="host") | select(.name == $host).children[]' | sort -V
+
+}
+
+
+#
+#  List all OSD nodes
+#
+
+function list_all_nodes() {
+
+
+  $CEPH osd tree --format json | $JQ  -M --raw-output '.nodes[] | select(.type=="host") | .name' | sort -V
 
 }
 
@@ -469,8 +483,55 @@ function show_host_osd_usage() {
 
   done
 
-  echo "Host: $host | Total_Size: $(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used: $(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_available: $(echo "scale=1;$total_available_kb/1024/1024" | bc -l)GB"
+  echo "Host: $host | Total_Size: $(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used: $(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_Available: $(echo "scale=1;$total_vailable_kb/1024/1024" | bc -l)GB"
 }
+
+
+#
+#  Print Total OSD usage of all nodes
+#
+
+function list_all_nodes_osd_usage() {
+
+  local pgmap_t=$(mktemp)
+
+  local osd_used_kb=0
+  local total_used_kb=0
+
+  local total_available_kb=0
+  local osd_available_kb=0
+
+  local total_size_kb=0
+  local osd_size_kb=0
+
+  [ $DEBUG -eq 1 ] && echoinfo "Dumping PG map..."
+  if ! $CEPH pg dump_json 2>/dev/null > $pgmap_t; then
+    echoerr "Failed to retrieve PG map"
+    exit 1
+  fi
+
+  for host in $(list_all_nodes); do
+
+    [ $DEBUG -eq 1 ] && echoinfo "Looking at node $host..."
+
+    for osd in $(list_osd_from_host $host); do
+
+      osd_used_kb=$(jq -M --raw-output --argjson osd $osd '.osd_stats[] | select(.osd == $osd).kb_used' $pgmap_t)
+      osd_available_kb=$(jq -M --raw-output --argjson osd $osd '.osd_stats[] | select(.osd == $osd).kb_avail' $pgmap_t)
+      osd_size_kb=$(jq -M --raw-output --argjson osd $osd '.osd_stats[] | select(.osd == $osd).kb' $pgmap_t)
+
+      [ $DEBUG -eq 1 ] && echoinfo "OSD: $osd | Size: $(echo "scale=1;$osd_size_kb/1024/1024" | bc -l)GB | Used: $(echo "scale=1;$osd_used_kb /1024/1024" | bc -l)GB | Available: $(echo "scale=1;$osd_available_kb/1024/1024" | bc -l)GB"
+
+      let "total_used_kb=total_used_kb+osd_used_kb"
+      let "total_available_kb=total_available_kb+osd_available_kb"
+      let "total_size_kb=total_size_kb+osd_size_kb"
+
+    done
+    echo "Host: $host | Total_Size: $(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used: $(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_Available: $(echo "scale=1;$total_vailable_kb/1024/1024" | bc -l)GB"
+  done
+
+}
+
 
 
 #
@@ -645,8 +706,14 @@ case $1 in
   "host-get-osd")
     list_osd_from_host $2
     ;;
+  "host-get-nodes")
+    list_all_nodes
+    ;;
   "host-osd-usage")
     show_host_osd_usage $2
+    ;;
+  "host-all-usage")
+    list_all_nodes_osd_usage
     ;;
   "pg-get-host")
     find_host_from_pg $2
