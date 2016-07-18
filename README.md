@@ -64,7 +64,7 @@ The current set of commands is as follow :
 
 ## WHAT ARE THE DEPENDENCIES
 
-You obviously needs the Ceph cli toolset binaries (ceph, rados, rbd, osdmaptool) as well as the jq utility which is used to parse json output. JSON parsing is much more efficient and easy to code than sed/grep/awk. The "bc" command is required for the "host-osd-usage" and "host-all-usage"commands.
+You obviously need the Ceph cli toolset binaries (ceph, rados, rbd, osdmaptool) as well as the jq utility which is used to parse json output. JSON parsing is much more efficient and easy to code than sed/grep/awk. The "bc" command is required for the "host-osd-usage" and "host-all-usage"commands.
 
 You also need the proper cephx permissions on both MONs and OSDs/pool you will query.
 
