@@ -460,6 +460,7 @@ function show_host_osd_usage() {
 
   local total_size_kb=0
   local osd_size_kb=0
+  local nb_osd=0
 
   [ $DEBUG -eq 1 ] && echoinfo "Dumping PG map..."
   if ! $CEPH pg dump_json 2>/dev/null > $pgmap_t; then
@@ -480,10 +481,11 @@ function show_host_osd_usage() {
     let "total_used_kb=total_used_kb+osd_used_kb"
     let "total_available_kb=total_available_kb+osd_available_kb"
     let "total_size_kb=total_size_kb+osd_size_kb"
+    let "nb_osd++"
 
   done
 
-  echo "Host: $host | Total_Size: $(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used: $(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_Available: $(echo "scale=1;$total_available_kb/1024/1024" | bc -l)GB"
+  echo "Host: $host | OSDs: $nb_osd | Total_Size: $(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used: $(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_Available: $(echo "scale=1;$total_available_kb/1024/1024" | bc -l)GB"
 }
 
 
@@ -503,6 +505,7 @@ function list_all_nodes_osd_usage() {
 
   local total_size_kb=0
   local osd_size_kb=0
+  local nb_osd=0
 
   [ $DEBUG -eq 1 ] && echoinfo "Dumping PG map..."
   if ! $CEPH pg dump_json 2>/dev/null > $pgmap_t; then
@@ -515,7 +518,7 @@ function list_all_nodes_osd_usage() {
     [ $DEBUG -eq 1 ] && echoinfo "Looking at node $host..."
 
     # Reset temporary variables
-    let osd_used_kb=total_used_kb=total_available_kb=osd_available_kb=total_size_kb=osd_size_kb=0
+    let osd_used_kb=total_used_kb=total_available_kb=osd_available_kb=total_size_kb=osd_size_kb=nb_osd=0
 
     for osd in $(list_osd_from_host $host); do
 
@@ -528,13 +531,13 @@ function list_all_nodes_osd_usage() {
       let "total_used_kb=total_used_kb+osd_used_kb"
       let "total_available_kb=total_available_kb+osd_available_kb"
       let "total_size_kb=total_size_kb+osd_size_kb"
+      let "nb_osd++"
 
     done
-    echo "Host: $host | Total_Size: $(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used: $(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_Available: $(echo "scale=1;$total_available_kb/1024/1024" | bc -l)GB"
+    echo "Host: $host | OSDs: $nb_osd | Total_Size: $(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used: $(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_Available: $(echo "scale=1;$total_available_kb/1024/1024" | bc -l)GB"
   done
 
 }
-
 
 
 #
