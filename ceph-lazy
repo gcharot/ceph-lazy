@@ -89,7 +89,7 @@ function check_requirements()
 
   for cmd in $bin_dep; do
     [ $DEBUG -eq 1 ] && echoinfo "Checking for $cmd..."
-    $cmd --version  >/dev/null 2>&1 || { echoerr "ERROR: $cmd cannot be found... Aborting."; return 1; }
+    $cmd --version  >/dev/null 2>&1 || { echoerr "$cmd cannot be found... Aborting."; return 1; }
   done
 
   CEPH="ceph $CEPH_OPT"
