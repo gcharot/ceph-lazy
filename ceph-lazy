@@ -476,7 +476,7 @@ function show_host_osd_usage() {
     osd_available_kb=$(jq -M --raw-output --argjson osd $osd '.osd_stats[] | select(.osd == $osd).kb_avail' $pgmap_t)
     osd_size_kb=$(jq -M --raw-output --argjson osd $osd '.osd_stats[] | select(.osd == $osd).kb' $pgmap_t)
 
-    [ $DEBUG -eq 1 ] && echoinfo "OSD: $osd | Size: $(echo "scale=1;$osd_size_kb/1024/1024" | bc -l)GB | Used: $(echo "scale=1;$osd_used_kb /1024/1024" | bc -l)GB | Available: $(echo "scale=1;$osd_available_kb/1024/1024" | bc -l)GB"
+    [ $DEBUG -eq 1 ] && echoinfo "OSD:$osd | Size:$(echo "scale=1;$osd_size_kb/1024/1024" | bc -l)GB | Used:$(echo "scale=1;$osd_used_kb /1024/1024" | bc -l)GB | Available:$(echo "scale=1;$osd_available_kb/1024/1024" | bc -l)GB"
 
     let "total_used_kb=total_used_kb+osd_used_kb"
     let "total_available_kb=total_available_kb+osd_available_kb"
@@ -485,7 +485,7 @@ function show_host_osd_usage() {
 
   done
 
-  echo "Host: $host | OSDs: $nb_osd | Total_Size: $(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used: $(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_Available: $(echo "scale=1;$total_available_kb/1024/1024" | bc -l)GB"
+  echo "Host:$host | OSDs:$nb_osd | Total_Size:$(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used:$(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_Available:$(echo "scale=1;$total_available_kb/1024/1024" | bc -l)GB"
 }
 
 
@@ -526,7 +526,7 @@ function list_all_nodes_osd_usage() {
       osd_available_kb=$(jq -M --raw-output --argjson osd $osd '.osd_stats[] | select(.osd == $osd).kb_avail' $pgmap_t)
       osd_size_kb=$(jq -M --raw-output --argjson osd $osd '.osd_stats[] | select(.osd == $osd).kb' $pgmap_t)
 
-      [ $DEBUG -eq 1 ] && echoinfo "OSD: $osd | Size: $(echo "scale=1;$osd_size_kb/1024/1024" | bc -l)GB | Used: $(echo "scale=1;$osd_used_kb /1024/1024" | bc -l)GB | Available: $(echo "scale=1;$osd_available_kb/1024/1024" | bc -l)GB"
+      [ $DEBUG -eq 1 ] && echoinfo "OSD:$osd | Size:$(echo "scale=1;$osd_size_kb/1024/1024" | bc -l)GB | Used:$(echo "scale=1;$osd_used_kb /1024/1024" | bc -l)GB | Available:$(echo "scale=1;$osd_available_kb/1024/1024" | bc -l)GB"
 
       let "total_used_kb=total_used_kb+osd_used_kb"
       let "total_available_kb=total_available_kb+osd_available_kb"
@@ -534,7 +534,7 @@ function list_all_nodes_osd_usage() {
       let "nb_osd++"
 
     done
-    echo "Host: $host | OSDs: $nb_osd | Total_Size: $(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used: $(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_Available: $(echo "scale=1;$total_available_kb/1024/1024" | bc -l)GB"
+    echo "Host:$host | OSDs:$nb_osd | Total_Size:$(echo "scale=1;$total_size_kb/1024/1024" | bc -l)GB | Total_Used:$(echo "scale=1;$total_used_kb /1024/1024" | bc -l)GB | Total_Available:$(echo "scale=1;$total_available_kb/1024/1024" | bc -l)GB"
   done
 
 }
