@@ -24,7 +24,7 @@ function echoerr() {
 
 function help() {
   >&2 echo "Usage : ceph-lazy [-d | -h] [command] [parameters]
-    
+
 Ceph complex quering tool - Version $VERSION
 
 OPTIONS
@@ -44,7 +44,7 @@ COMMANDS
 
     Placement groups
     -----------------
-    pg-get-host       pgid                          Find PG storage hosts (first is primary) 
+    pg-get-host       pgid                          Find PG storage hosts (first is primary)
     pg-most-write                                   Find most written PG (nb operations)
     pg-less-write                                   Find less written PG (nb operations)
     pg-most-write-kb                                Find most written PG (data written)
@@ -74,7 +74,7 @@ COMMANDS
     Objects
     --------
     object-get-host   pool_name object_id           Find object storage hosts (first is primary)
-  " 
+  "
 
 }
 
@@ -143,8 +143,8 @@ function find_host_from_object() {
 
   local pgid=$($CEPH osd map $pool $objid --format json 2> /dev/null | $JQ -cr .pgid)
 
-  [ $DEBUG -eq 1 ] && echoinfo $objid found into PG $pgid 
-  
+  [ $DEBUG -eq 1 ] && echoinfo $objid found into PG $pgid
+
   while read host; do
     echo "PG:$pgid | $host"
   done < <(find_host_from_pg $pgid)
@@ -194,7 +194,7 @@ function check_rbd_exists(){
 
   pool=$1
   rbd=$2
-  
+
   if ! rbd info -p $pool $rbd &> /dev/null; then
     echoerr "Unable to find image $pool/$rbd"
     exit 1
@@ -359,7 +359,7 @@ function find_prim_osd_from_rbd() {
 
 
 #
-#  Print RBD image real size - Source http://ceph.com/planet/real-size-of-a-ceph-rbd-image/ 
+#  Print RBD image real size - Source http://ceph.com/planet/real-size-of-a-ceph-rbd-image/
 #
 
 function print_rbd_real_size {
