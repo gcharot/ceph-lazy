@@ -660,7 +660,7 @@ function find_less_read_pg() {
 #
 function find_most_read_pg() {
 
-  local pgid=$($CEPH pg dump --format json 2> /dev/null| $JQ '.pg_stats | max_by(.stat_sum.num_read).pgid')
+  local pgid=$($CEPH pg dump pgs --format json 2> /dev/null| $JQ 'max_by(.stat_sum.num_read).pgid')
   local osd=$($CEPH pg $pgid  query --format json | $JQ -cr .info.stats.up_primary)
   local host=$($CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host)
 
@@ -669,11 +669,48 @@ function find_most_read_pg() {
 
 
 #
+#  Query PG stats
+#
+
+function pg_stat_query() {
+
+  if [ $# -eq 1 ]; then
+    local query_type=$1
+  else
+    echoerr "This command requires one argument"
+    help
+    exit 1
+  fi
+
+  local pgmap_t=$(mktemp)
+
+  [ $DEBUG -eq 1 ] && echoinfo "Dumping PG map..."
+  if ! $CEPH pg dump pgs --format json 2>/dev/null > $pgmap_t; then
+    echoerr "Failed to retrieve PG map"
+    exit 1
+  fi
+
+  local pgid=$($JQ --arg query_type $query_type "$query_type" $pgmap_t)
+  [ $DEBUG -eq 1 ] && echoinfo "Found PGID $pgid"
+
+  local osd=$($JQ --arg pgid $pgid '.[] | select(.pgid == $pgid).acting_primary' $pgmap_t)
+  [ $DEBUG -eq 1 ] && echoinfo "Found OSD $OSD"
+
+  local host=$($CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host)
+  [ $DEBUG -eq 1 ] && echoinfo "Found host $host"
+
+  echo "PG:$pgid | OSD:osd.$osd | Host:$host"
+
+  rm -f $pgmap_t
+}
+
+
+#
 #  Find empty pgs (no object stored)
 #
 function find_empty_pg() {
 
-  $CEPH pg dump --format json 2>/dev/null | $JQ '.pg_stats[] | select(.stat_sum.num_objects == 0).pgid'
+  $CEPH pg dump pgs --format json 2>/dev/null | $JQ '.[] | select(.stat_sum.num_objects == 0).pgid'
 
 }
 
@@ -737,7 +774,7 @@ case $1 in
     find_less_write_kb_pg
     ;;
   "pg-most-read")
-    find_most_read_pg
+    pg_stat_query "max_by(.stat_sum.num_read).pgid"
     ;;
   "pg-less-read")
     find_less_read_pg
