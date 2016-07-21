@@ -514,7 +514,7 @@ function list_all_nodes_osd_usage() {
 
 function find_most_used_osd() {
 
-  local osd=$($CEPH pg dump --format json 2> /dev/null| $JQ '.osd_stats | max_by(.kb_used) | .osd')
+  local osd=$($CEPH pg dump osds --format json 2> /dev/null| $JQ 'max_by(.kb_used) | .osd')
   local host=$($CEPH osd find $osd 2> /dev/null | $JQ .crush_location.host)
 
   echo "OSD:osd.${osd} | host:$host"
@@ -527,7 +527,7 @@ function find_most_used_osd() {
 
 function find_less_used_osd() {
 
-  local osd=$($CEPH pg dump --format json 2> /dev/null| $JQ '.osd_stats | min_by(.kb_used) | .osd')
+  local osd=$($CEPH pg dump osds --format json 2> /dev/null| $JQ 'min_by(.kb_used) | .osd')
   local host=$($CEPH osd find $osd 2> /dev/null | $JQ .crush_location.host)
 
   echo "OSD:osd.${osd} | host:$host"
