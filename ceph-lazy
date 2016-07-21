@@ -463,7 +463,7 @@ function show_host_osd_usage() {
   local nb_osd=0
 
   [ $DEBUG -eq 1 ] && echoinfo "Dumping PG map..."
-  if ! $CEPH pg dump_json 2>/dev/null > $pgmap_t; then
+  if ! $CEPH pg dump osds 2>/dev/null > $pgmap_t; then
     echoerr "Failed to retrieve PG map"
     exit 1
   fi
@@ -472,9 +472,9 @@ function show_host_osd_usage() {
 
   for osd in $(list_osd_from_host $host); do
 
-    osd_used_kb=$(jq -M --raw-output --argjson osd $osd '.osd_stats[] | select(.osd == $osd).kb_used' $pgmap_t)
-    osd_available_kb=$(jq -M --raw-output --argjson osd $osd '.osd_stats[] | select(.osd == $osd).kb_avail' $pgmap_t)
-    osd_size_kb=$(jq -M --raw-output --argjson osd $osd '.osd_stats[] | select(.osd == $osd).kb' $pgmap_t)
+    osd_used_kb=$($JQ --argjson osd $osd '.[] | select(.osd == $osd).kb_used' $pgmap_t)
+    osd_available_kb=$($JQ --argjson osd $osd '.[] | select(.osd == $osd).kb_avail' $pgmap_t)
+    osd_size_kb=$($JQ --argjson osd $osd '.[] | select(.osd == $osd).kb' $pgmap_t)
 
     [ $DEBUG -eq 1 ] && echoinfo "OSD:$osd | Size:$(echo "scale=1;$osd_size_kb/1024/1024" | bc -l)GB | Used:$(echo "scale=1;$osd_used_kb /1024/1024" | bc -l)GB | Available:$(echo "scale=1;$osd_available_kb/1024/1024" | bc -l)GB"
 
