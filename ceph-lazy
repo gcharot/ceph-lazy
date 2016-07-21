@@ -2,7 +2,7 @@
 
 # Specify exta option for ceph like the username/keyring/etc. Can also be done with CEPH_ARGS global variable
 #CEPH_OPT="-n client.username"
-VERSION="1.1"
+VERSION="1.1.2"
 
 #
 #  Print info message to stderr
@@ -165,7 +165,7 @@ function find_prim_pg_from_osd() {
   fi
 
   [ $DEBUG -eq 1 ] && echoinfo "Looking for primary PGs beloging to OSD $posd"
-  $CEPH pg dump --format json 2>/dev/null | $JQ --argjson posd $posd '.pg_stats[] | select(.acting_primary==$posd).pgid'
+  $CEPH pg dump pgs --format json 2>/dev/null | $JQ --argjson posd $posd '.[] | select(.acting_primary==$posd).pgid'
 }
 
 
@@ -183,7 +183,7 @@ function find_all_pg_from_osd() {
   fi
 
   [ $DEBUG -eq 1 ] && echoinfo "Looking for all PGs mapped to OSD $osd"
-  $CEPH pg dump --forma json 2> /dev/null | $JQ -M --argjson osd $osd '.pg_stats[] | select(.up[]==$osd).pgid'
+  $CEPH pg dump pgs --format json 2> /dev/null | $JQ -M --argjson osd $osd '.[] | select(.up[]==$osd).pgid'
 }
 
 
@@ -592,7 +592,7 @@ function pg_stat_query() {
   [ $DEBUG -eq 1 ] && echoinfo "Found PGID $pgid"
 
   local osd=$($JQ --arg pgid $pgid '.[] | select(.pgid == $pgid).acting_primary' $pgmap_t)
-  [ $DEBUG -eq 1 ] && echoinfo "Found OSD $OSD"
+  [ $DEBUG -eq 1 ] && echoinfo "Found OSD $osd"
 
   local host=$($CEPH osd find $osd --format json 2> /dev/null | $JQ .crush_location.host)
   [ $DEBUG -eq 1 ] && echoinfo "Found host $host"
