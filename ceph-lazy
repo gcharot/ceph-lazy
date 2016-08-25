@@ -302,7 +302,7 @@ function find_prim_host_from_rbd() {
   for obj in $(rados -p $pool ls | grep $rbd_prefix);
     do
 # Map object to osd. osdmaptoot does not support json output so using dirty sed.
-      osd=$(osdmaptool  --test-map-object $obj $osdmap_t 2>/dev/null | sed -r 's/.*\[([[:digit:]]+),.*/\1/' | grep -v osdmaptool)
+      osd=$(osdmaptool  --test-map-object $obj --pool $pool_id $osdmap_t 2>/dev/null | sed -r 's/.*\[([[:digit:]]+),.*/\1/' | grep -v osdmaptool)
 # Map osd to host
       $JQ --argjson osd $osd  '.nodes[] | select(.type=="host") | select(.children[] == $osd).name' $osdtree_t
   done | sort -u
