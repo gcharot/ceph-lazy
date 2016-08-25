@@ -277,7 +277,7 @@ function find_prim_host_from_rbd() {
   local osdtree_t=$(mktemp)
   # Get RBD image prefix
   local rbd_prefix=$(get_rbd_prefix $pool $rbd)
-
+  local pool_id=$(ceph osd lspools -f json | $JQ  -M --arg pool $pool '.[]|select(.poolname==$pool).poolnum')
 # Exit if we received an empty prefix
   [ -z $rbd_prefix ] && exit 1
 
