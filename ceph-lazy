@@ -277,10 +277,10 @@ function find_prim_host_from_rbd() {
   local osdtree_t=$(mktemp)
   # Get RBD image prefix
   local rbd_prefix=$(get_rbd_prefix $pool $rbd)
-
 # Exit if we received an empty prefix
   [ -z $rbd_prefix ] && exit 1
-
+  local pool_id=$(ceph osd lspools -f json | $JQ  -M --arg pool $pool '.[]|select(.poolname==$pool).poolnum')
+  
   [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has prefix $rbd_prefix; now finding primary host..."
 
   [ $DEBUG -eq 1 ] && echoinfo "Dumping OSD map to $osdmap_t"
@@ -302,7 +302,7 @@ function find_prim_host_from_rbd() {
   for obj in $(rados -p $pool ls | grep $rbd_prefix);
     do
 # Map object to osd. osdmaptoot does not support json output so using dirty sed.
-      osd=$(osdmaptool  --test-map-object $obj $osdmap_t 2>/dev/null | sed -r 's/.*\[([[:digit:]]+),.*/\1/' | grep -v osdmaptool)
+      osd=$(osdmaptool  --test-map-object $obj --pool $pool_id $osdmap_t 2>/dev/null | sed -r 's/.*\[([[:digit:]]+),.*/\1/' | grep -v osdmaptool)
 # Map osd to host
       $JQ --argjson osd $osd  '.nodes[] | select(.type=="host") | select(.children[] == $osd).name' $osdtree_t
   done | sort -u
