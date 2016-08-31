@@ -279,12 +279,14 @@ function find_prim_host_from_rbd() {
   local rbd_prefix=$(get_rbd_prefix $pool $rbd)
 # Exit if we received an empty prefix
   [ -z $rbd_prefix ] && exit 1
+
+# Get pool ID from pool name
   local pool_id=$(ceph osd lspools -f json | $JQ  -M --arg pool $pool '.[]|select(.poolname==$pool).poolnum')
   
   [ $DEBUG -eq 1 ] && echoinfo "RBD image $pool/$rbd has prefix $rbd_prefix; now finding primary host..."
 
   [ $DEBUG -eq 1 ] && echoinfo "Dumping OSD map to $osdmap_t"
-  if ! $CEPH osd getmap > $osdmap_t; then
+  if ! $CEPH osd getmap > $osdmap_t 2> /dev/null; then
     echoerr "Failed to retrieve OSD map"
     exit 1
   fi
