@@ -1,4 +1,14 @@
 #!/bin/bash
+#
+# ceph-lazy : Be efficient, be lazy !
+#
+# Author: Gregory Charot <loi>
+#
+#  This library is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License as published by the Free Software Foundation; either
+#  version 2.1 of the License, or (at your option) any later version.
+#
 
 # Specify exta option for ceph like the username/keyring/etc. Can also be done with CEPH_ARGS global variable
 #CEPH_OPT="-n client.username"
