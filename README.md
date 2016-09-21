@@ -63,10 +63,17 @@ The current set of commands is as follow :
 
 
 ## WHAT ARE THE DEPENDENCIES
-
-You obviously need the Ceph cli toolset binaries (ceph, rados, rbd, osdmaptool) as well as the jq utility which is used to parse json output. JSON parsing is much more efficient and easy to code than sed/grep/awk. The "bc" command is required for the "host-osd-usage" and "host-all-usage"commands.
-
-You also need the proper cephx permissions on both MONs and OSDs/pool you will query.
+- Ceph cli toolset binaries (ceph, rados, rbd, osdmaptool)
+- [jq utility](https://github.com/stedolan/jq) which is used to parse json output. JSON parsing is much more efficient and easy to code than sed/grep/awk. 
+```
+wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-1.5.tar.gz
+gunzip  jq-1.5.tar.gz ; tar -xvf jq-1.5.tar ; cd jq-1.5
+./configure --disable-maintainer-mode
+make install
+jq --version
+```
+- Basic Calculator ("bc" command) is required for the "host-osd-usage" and "host-all-usage"commands.
+- You also need the proper cephx permissions on both MONs and OSDs/pool you will query.
 
 
 ## HOW TO INSTALL
