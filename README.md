@@ -1,3 +1,7 @@
+
+Since 20/10/16 this tool is intergrated to Ceph official git repo and thus not supported please use https://github.com/ceph/ceph/tree/master/src/tools/ceph-lazy
+
+
 # ceph-lazy - Complex Ceph query tool
 
 
